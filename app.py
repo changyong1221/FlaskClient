@@ -35,7 +35,7 @@ def train():
 def submit_submodel():
     # money = request.json["money"]
     # print(money)
-    submodel_path = 'models/clients/submodel.npy'
+    submodel_path = 'models/clients/sub_model.npy'
     if glo.get_global_var("train_staus") == "training":
         return json.dumps({"status": "training"})
     if not glo.get_global_var("has_submodel"):
