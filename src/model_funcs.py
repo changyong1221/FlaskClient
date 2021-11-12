@@ -1,11 +1,20 @@
 import os
-
+import time
+import shutil
 import src.globals as glo
 from src.fedlib import *
 from src.dataset_funcs import load_client_dataset, load_all_dataset
 from keras.models import Sequential
 from keras.layers import Dropout, Dense, Flatten
 from keras.layers import Conv2D, MaxPooling2D
+
+# settings
+dataset_path = "datasets/computer_status_dataset.csv"
+features = ['cpu_usage', 'memory_usage', 'disk_usage', 'num_tasks',
+            'bandwidth', 'mips', 'cpu_freq', 'cpu_cache', 'ram',
+            'ram_freq', 'disk', 'pes_num', 'priority']
+global_model_path = "models/global/global_model.npy"
+sub_model_path = "models/clients/sub_model.npy"
 
 
 def print_log(s):
@@ -45,19 +54,16 @@ def save_pic(path, acc, loss, name):
 
 
 def train_one_model():
-    import time
-
     glo.set_global_var("train_status", "training")
-    epoch = 10
-    global_model_save_path = "models/global/global_model.npy"
+    epoch = 200
     x_train, y_train, x_test, y_test = load_client_dataset()
 
     startTime = time.time()
     client_id = glo.get_global_var("client_id")
     model = FedClient(model=create_model(), ID=client_id)
     model.setJob(jobAdress="x3tg83jx0m4jf8chyp5djas4jf9")
-    if os.path.exists(global_model_save_path):
-        model.load_model(global_model_save_path, weight=True)
+    if os.path.exists(global_model_path):
+        model.load_model(global_model_path, weight=True)
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     model.fit(x=x_train,
               y=y_train,
@@ -67,22 +73,21 @@ def train_one_model():
     loss, acc = model.evaluate(x=x_test,
                                y=y_test,
                                batch_size=128)
-    model_path = "models/clients/sub_model.npy"
-    model.save_model(model_path, weight=True)
+    model.save_model(sub_model_path, weight=True)
     # model.upload()
-    glo.set_global_var("train_status", "finished")
-    glo.set_global_var("has_submodel", True)
     print_log(f"Client-ID:{client_id} , loss:{loss} , acc:{acc} , Time:{time.time() - startTime}")
+    glo.set_global_var("train_status", "todo")
+
+
+def has_submodel():
+    if os.path.exists(sub_model_path):
+        return True
+    else:
+        return False
 
 
 def train_models():
-    import time
-
-    file_path = "datasets/computer_status_dataset.csv"
-    features = ['cpu_usage', 'memory_usage', 'disk_usage', 'num_tasks',
-                'bandwidth', 'mips', 'cpu_freq', 'cpu_cache', 'ram',
-                'ram_freq', 'disk', 'pes_num', 'priority']
-    x_train, y_train, x_test, y_test = load_all_dataset(file_path, features, test_size=0.5)
+    x_train, y_train, x_test, y_test = load_all_dataset(dataset_path, features, test_size=0.5)
 
     client_num = 5
     x_train_num = len(x_train)
@@ -91,13 +96,12 @@ def train_models():
     x_test_per = x_test_num // client_num
 
     epoch = 10
-    global_model_save_path = "models/global/global_model.npy"
     for idx in range(client_num):
         startTime = time.time()
         model = FedClient(model=create_model(), ID=idx)
         model.setJob(jobAdress="x3tg83jx0m4jf8chyp5djas4jf9")
-        if os.path.exists(global_model_save_path):
-            model.load_model(global_model_save_path, weight=True)
+        if os.path.exists(global_model_path):
+            model.load_model(global_model_path, weight=True)
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
         model.fit(x=x_train[idx * x_train_per:(idx + 1) * x_train_per],
                   y=y_train[idx * x_train_per:(idx + 1) * x_train_per],
@@ -120,11 +124,7 @@ def submodels_test():
 
 
 def merge_models_and_test():
-    file_path = "datasets/computer_status_dataset.csv"
-    features = ['cpu_usage', 'memory_usage', 'disk_usage', 'num_tasks',
-                'bandwidth', 'mips', 'cpu_freq', 'cpu_cache', 'ram',
-                'ram_freq', 'disk', 'pes_num', 'priority']
-    x_train, y_train, x_test, y_test = load_all_dataset(file_path, features, test_size=0.5)
+    x_train, y_train, x_test, y_test = load_all_dataset(dataset_path, features, test_size=0.5)
 
     client_num = glo.get_global_var("merge_clients_num")
     x_test_num = len(x_test)
@@ -150,9 +150,7 @@ def merge_models_and_test():
         print_log(f'client({idx})_loss:{loss}, client({idx})_acc:{acc}')
 
     # merge global model and test
-    global_model_save_path = "models/global/global_model.npy"
     global_model = FedServer(model=create_model())
-
     global_model.load_client_weights(models_path_list)
     global_model.fl_average()
     global_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -166,12 +164,45 @@ def merge_models_and_test():
     print_log(
         f'global_avg_loss:{np.mean(global_loss_list)}, global_avg_acc:{np.mean(global_acc_list)}')
 
-    global_model.save_model(global_model_save_path, weight=True)
+    global_model.save_model(global_model_path, weight=True)
     global_model_score = np.mean(global_acc_list) * 1000
     retSet = {"clients_scores": client_score_list, "global_score": int(global_model_score)}
     print(retSet)
     return retSet
 
+
+# update local model to the newest global model
+def update_model():
+    x_train, y_train, x_test, y_test = load_all_dataset(dataset_path, features, test_size=0.1)
+
+    # get test score of sub_model
+    client_id = glo.get_global_var("client_id")
+    client_model = FedClient(model=create_model(), ID=client_id)
+    client_model.load_model(sub_model_path, weight=True)
+    client_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    client_loss, client_acc = client_model.evaluate(x=x_test, y=y_test, batch_size=128)
+    sub_model_score = client_acc * 1000
+    print_log(f'client({client_id})_loss:{client_loss}, client({client_id})_acc:{client_acc}')
+
+    # get test score of global_model
+    global_model = FedServer(model=create_model())
+    global_model.load_model(global_model_path, weight=True)
+    global_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    global_loss, global_acc = global_model.evaluate(x=x_test, y=y_test, batch_size=128)
+    global_model_score = global_acc * 1000
+
+    print(f"sub_model_score: {sub_model_score}")
+    print(f"global_model_score: {global_model_score}")
+    if global_model_score > sub_model_score:
+        print("global model is better.")
+        print("updating local model...")
+        if os.path.exists(global_model_path):
+            shutil.copyfile(global_model_path, sub_model_path)
+        print("local model updated.")
+    else:
+        print("local model is better.")
+        os.remove(global_model_path)
+        print("global model dropped.")
+
 # if __name__ == '__main__':
-#     glo.__init()
-#     merge_models()
+#     update_model()
