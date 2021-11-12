@@ -24,17 +24,17 @@ def root():
     return render_template('Index.html')
 
 
-@app.route("/train")
+@app.route("/train", methods=['POST'])
 def train():
     print("hahaha")
     train_one_model()
     return json.dumps({"status": "success"})
 
 
-@app.route("/infoSubmit")
+@app.route("/infoSubmit", methods=['POST'])
 def submit_submodel():
-    # money = request.json["money"]
-    # print(money)
+    money = request.json["money"]
+    print(f"money: {money}")
     submodel_path = 'models/clients/sub_model.npy'
     if glo.get_global_var("train_staus") == "training":
         return json.dumps({"status": "training"})
@@ -48,20 +48,23 @@ def submit_submodel():
     return ret
 
 
-@app.route("/infoWork")
+@app.route("/infoWork", methods=['POST'])
 def merge_models():
-    if glo.get_global_var("merge_status") == "merging":
+    if glo.get_global_var("merge_status") == "todo":
+        return json.dumps({"status": "request received"})
+    elif glo.get_global_var("merge_status") == "merging":
         return json.dumps({"status": "merging"})
     glo.set_global_var("merge_status", "merging")
-    # model_ids = request.json["models"]
-    model_ids = ["10a1b887db6eb16f1c5e73da51c6b645dd0cd0b4bd17c183bdd205e502e0c29e",
-                 "01d8de78a6e0a975b5f3eed94600d2d92577348cec226776438de507b07eece1",
-                 "441707c3e702a4d61d62122ace5c6712c060d8d0fa7868108c2a9a96678b12aa",
-                 "8ed728a48823854fd87a10265e7364a377be31869d4e211523348851a2e7ac9b",
-                 "9ca9fa2d8b5b14ed64054f9c525200cde39ef7673ab3e8d438d610fba719ea04"]
+    model_ids = request.json["models"]
+    # model_ids = ["10a1b887db6eb16f1c5e73da51c6b645dd0cd0b4bd17c183bdd205e502e0c29e",
+    #              "01d8de78a6e0a975b5f3eed94600d2d92577348cec226776438de507b07eece1",
+    #              "441707c3e702a4d61d62122ace5c6712c060d8d0fa7868108c2a9a96678b12aa",
+    #              "8ed728a48823854fd87a10265e7364a377be31869d4e211523348851a2e7ac9b",
+    #              "9ca9fa2d8b5b14ed64054f9c525200cde39ef7673ab3e8d438d610fba719ea04"]
     glo.set_global_var("merge_clients_num", len(model_ids))
     # get all submodels from swarm
     print("start downloading submodels.")
+    glo.set_global_var("download_status", "todo")
     for idx, swarm_id in enumerate(model_ids):
         data = {"swarm_id": swarm_id, "client_id": idx, "is_global": False}
         print(data)
@@ -88,11 +91,11 @@ def merge_models():
 
     ret = {"models": model_ids, "scores": scores["clients_scores"], "fscore": scores["global_score"],
            "fmodel": response.json()['swarm_id'], "stop": False}
-    glo.set_global_var("merge_status", "finished")
     print(ret)
 
     print("global model uploading finished.")
     print("all tasks have been done.")
+    glo.set_global_var("merge_status", "todo")
     return json.dumps(ret)
 
 
