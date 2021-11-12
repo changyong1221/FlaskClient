@@ -44,15 +44,16 @@ def save_pic(path, acc, loss, name):
     plt.savefig(path)
 
 
-def train_one_model(client_id):
+def train_one_model():
     import time
 
     glo.set_global_var("train_status", "training")
     epoch = 10
     global_model_save_path = "models/global/global_model.npy"
-    x_train, y_train, x_test, y_test = load_client_dataset(client_id)
+    x_train, y_train, x_test, y_test = load_client_dataset()
 
     startTime = time.time()
+    client_id = glo.get_global_var("client_id")
     model = FedClient(model=create_model(), ID=client_id)
     model.setJob(jobAdress="x3tg83jx0m4jf8chyp5djas4jf9")
     if os.path.exists(global_model_save_path):

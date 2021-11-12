@@ -27,7 +27,7 @@ def root():
 @app.route("/train")
 def train():
     print("hahaha")
-    train_one_model(client_id)
+    train_one_model()
     return json.dumps({"status": "success"})
 
 
@@ -39,7 +39,7 @@ def submit_submodel():
     if glo.get_global_var("train_staus") == "training":
         return json.dumps({"status": "training"})
     if not glo.get_global_var("has_submodel"):
-        train_one_model(client_id)
+        train_one_model()
     data = {'file': open(submodel_path, 'rb')}
     response = requests.post('http://10.112.58.204:40000/upload_to_swarm', files=data)
 
