@@ -7,6 +7,7 @@ import time
 import src.globals as glo
 from concurrent.futures import ThreadPoolExecutor
 import argparse
+import socket
 from multiprocessing import Process
 
 app = Flask(__name__)
@@ -187,9 +188,15 @@ def get_newest_global_model():
     return Response(json.dumps({'status': 'success'}), mimetype="application/json")
 
 
-# run app
-def app_run(host, port):
-    app.run(debug=True, host=host, port=port)
+# get ipv4 address of current machine
+def get_host_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+    return ip
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=False)
@@ -201,7 +208,7 @@ if __name__ == '__main__':
     # app.run(debug=True, host=local_host, port=local_port)
 
     # Attention: some parameters should be set in the following before first run
-    local_host = "0.0.0.0"
+    local_host = get_host_ip()
     # local_port = 4001
     swarm_server_host = "10.112.58.204"
     swarm_server_port = "40000"
@@ -219,7 +226,7 @@ if __name__ == '__main__':
     dapp_port = int(local_port) + 1000
     dapp_address = f"localhost:{dapp_port}"
     local_address = f"{local_host}:{local_port}"
-
+    print(local_address)
     app.run(debug=True, host=local_host, port=args.port)
 
     # multiprocessing
