@@ -1,28 +1,13 @@
 from flask import Flask, render_template, request, Response
 from src.model_funcs import train_one_model, merge_models_and_test, has_submodel, update_model
 import requests
-import os, json
+import os
+import json
 import time
 import src.globals as glo
 from concurrent.futures import ThreadPoolExecutor
-
-# Attention: some parameters should be set in the following before first run
-local_host = "127.0.0.1"
-local_port = "4000"
-swarm_server_host = "10.112.58.204"
-swarm_server_port = "40000"
-clients_num = 5
-client_id = 0
-
-# Initialization
-glo.__init()
-glo.set_global_var("clients_num", clients_num)
-glo.set_global_var("client_id", client_id)
-executor = ThreadPoolExecutor(5)
-swarm_server = f"{swarm_server_host}:{swarm_server_port}"
-dapp_port = int(local_port) + 1000
-dapp_address = f"localhost:{dapp_port}"
-local_address = f"{local_host}:{local_port}"
+import argparse
+from multiprocessing import Process
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abcdefg'
@@ -202,6 +187,44 @@ def get_newest_global_model():
     return Response(json.dumps({'status': 'success'}), mimetype="application/json")
 
 
+# run app
+def app_run(host, port):
+    app.run(debug=True, host=host, port=port)
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(add_help=False)
+    # parser.add_argument('-h', '--host', dest='host', type=str, default='0.0.0.0')
+    parser.add_argument('-p', '--port', dest='port', type=str, default='4000')
+    parser.add_argument("-i", "--id", dest='id', type=int, default=0)
+    args = parser.parse_args()
     # app.run(debug=True, host='10.128.205.41', port='4000')
-    app.run(debug=True, host=local_host, port=local_port)
+    # app.run(debug=True, host=local_host, port=local_port)
+
+    # Attention: some parameters should be set in the following before first run
+    local_host = "0.0.0.0"
+    # local_port = 4001
+    swarm_server_host = "10.112.58.204"
+    swarm_server_port = "40000"
+    clients_num = 5
+    # client_id = 0
+    local_port = args.port
+    client_id = args.id
+
+    # Initialization
+    glo.__init()
+    glo.set_global_var("clients_num", clients_num)
+    glo.set_global_var("client_id", client_id)
+    executor = ThreadPoolExecutor(10)
+    swarm_server = f"{swarm_server_host}:{swarm_server_port}"
+    dapp_port = int(local_port) + 1000
+    dapp_address = f"localhost:{dapp_port}"
+    local_address = f"{local_host}:{local_port}"
+
+    app.run(debug=True, host=local_host, port=args.port)
+
+    # multiprocessing
+    # client_nums = 5
+    # for i in range(client_nums):
+    #     p = Process(target=app_run, args=(local_host, str(local_port+i)))
+    #     p.start()
+    #     p.join()

@@ -56,7 +56,7 @@ def save_pic(path, acc, loss, name):
 def train_one_model():
     glo.set_global_var("train_status", "training")
     epoch = 200
-    x_train, y_train, x_test, y_test = load_client_dataset()
+    x_train, y_train, x_test, y_test = load_all_dataset(dataset_path, features, test_size=0.5)
 
     startTime = time.time()
     client_id = glo.get_global_var("client_id")
@@ -69,7 +69,7 @@ def train_one_model():
               y=y_train,
               batch_size=128,
               epochs=epoch,
-              verbose=0)
+              verbose=2)
     loss, acc = model.evaluate(x=x_test,
                                y=y_test,
                                batch_size=128)

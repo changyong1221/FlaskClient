@@ -10,6 +10,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\run.py">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\src\model_funcs.py">
           <value>
             <Attribute>
