@@ -1,4 +1,5 @@
 import socket
+import os
 
 
 def get_host_ip():
@@ -16,4 +17,6 @@ def get_host_ip():
 
 
 if __name__ == '__main__':
-    print(get_host_ip())
+    path = "test"
+    if not os.path.exists(path):
+        os.makedirs(path)

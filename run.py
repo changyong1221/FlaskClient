@@ -8,7 +8,8 @@ executor = ThreadPoolExecutor(100)
 def create_app(paras):
     port = paras["port"]
     id = paras["id"]
-    os.system(f"python app.py -p {port} -i {id}")
+    clients_num = paras["clients_num"]
+    os.system(f"python app.py -p {port} -i {id} -n {clients_num}")
 
 
 if __name__ == '__main__':
@@ -23,5 +24,5 @@ if __name__ == '__main__':
     while i <= clients_num:
         port = start_port + i
         id = i - 1
-        executor.submit(create_app, ({"port": port, "id": id}))
+        executor.submit(create_app, ({"port": port, "id": id, "clients_num": clients_num}))
         i += 1

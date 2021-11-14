@@ -13,9 +13,6 @@ dataset_path = "datasets/computer_status_dataset.csv"
 features = ['cpu_usage', 'memory_usage', 'disk_usage', 'num_tasks',
             'bandwidth', 'mips', 'cpu_freq', 'cpu_cache', 'ram',
             'ram_freq', 'disk', 'pes_num', 'priority']
-global_model_path = "models/global/global_model.npy"
-sub_model_path = "models/clients/sub_model.npy"
-
 
 def print_log(s):
     with open('log.log', 'a+') as f:
@@ -55,7 +52,9 @@ def save_pic(path, acc, loss, name):
 
 def train_one_model():
     glo.set_global_var("train_status", "training")
-    epoch = 200
+    global_model_path = glo.get_global_var("global_model_path")
+    sub_model_path = glo.get_global_var("sub_model_path")
+    epoch = 20
     x_train, y_train, x_test, y_test = load_all_dataset(dataset_path, features, test_size=0.5)
 
     startTime = time.time()
@@ -74,12 +73,14 @@ def train_one_model():
                                y=y_test,
                                batch_size=128)
     model.save_model(sub_model_path, weight=True)
-    # model.upload()
+    model.upload()
     print_log(f"Client-ID:{client_id} , loss:{loss} , acc:{acc} , Time:{time.time() - startTime}")
+    print("training done.")
     glo.set_global_var("train_status", "todo")
 
 
 def has_submodel():
+    sub_model_path = glo.get_global_var("sub_model_path")
     if os.path.exists(sub_model_path):
         return True
     else:
@@ -94,6 +95,7 @@ def train_models():
     x_test_num = len(x_test)
     x_train_per = x_train_num // client_num
     x_test_per = x_test_num // client_num
+    global_model_path = glo.get_global_var("global_model_path")
 
     epoch = 10
     for idx in range(client_num):
@@ -126,13 +128,15 @@ def submodels_test():
 def merge_models_and_test():
     x_train, y_train, x_test, y_test = load_all_dataset(dataset_path, features, test_size=0.5)
 
+    client_id = glo.get_global_var("client_id")
     client_num = glo.get_global_var("merge_clients_num")
+    global_model_path = glo.get_global_var("global_model_path")
     x_test_num = len(x_test)
     x_test_per = x_test_num // client_num
     models_path_list = []
     for i in range(client_num):
-        print(f'models/downloads/{i}.npy')
-        models_path_list.append(f'models/downloads/{i}.npy')
+        print(f'models/downloads/client-{client_id}/{i}.npy')
+        models_path_list.append(f'models/downloads/client-{client_id}/{i}.npy')
 
     # get test scores of submodels
     client_acc_list = []
@@ -173,6 +177,8 @@ def merge_models_and_test():
 
 # update local model to the newest global model
 def update_model():
+    global_model_path = glo.get_global_var("global_model_path")
+    sub_model_path = glo.get_global_var("sub_model_path")
     x_train, y_train, x_test, y_test = load_all_dataset(dataset_path, features, test_size=0.1)
 
     # get test score of sub_model

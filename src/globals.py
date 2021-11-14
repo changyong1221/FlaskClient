@@ -17,6 +17,10 @@ def __init():
     _global_dict["clients_num"] = 5
     _global_dict["merge_clients_num"] = 5
     _global_dict["client_id"] = 0
+    _global_dict["global_model_path"] = ""
+    _global_dict["sub_model_path"] = ""
+    _global_dict["job_info_path"] = ""
+
 
 
 def set_global_var(key, value):
