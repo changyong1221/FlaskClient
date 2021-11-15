@@ -70,6 +70,7 @@ class FedServer(BaseModel):
     def fl_average(self):
         # FL average
         self.weights = np.average(self.models_data, axis=0)
+        self.model.set_weights(self.weights)
 
     def setJob(self, jobAdress):
         pass
