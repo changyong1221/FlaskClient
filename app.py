@@ -44,14 +44,18 @@ def submit_submodel():
     submodel_path = glo.get_global_var("sub_model_path")
     if glo.get_global_var("train_status") == "training":
         return json.dumps({"status": "training"})
-    if not has_submodel():
-        train_one_model()
+    # if not has_submodel():
+    #     train_one_model()
+    printLog("start training...")
+    train_one_model()
+    printLog("train finished.")
     data = {'file': open(submodel_path, 'rb')}
     response = requests.post(f'http://{swarm_server}/upload_to_swarm', files=data)
 
     # printLog(response.text)
     ret = {"swarm_id": response.json()["swarm_id"]}
     printLog(ret)
+    printLog("model uploaded.")
     return ret
 
 

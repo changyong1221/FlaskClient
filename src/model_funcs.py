@@ -54,7 +54,7 @@ def train_one_model():
     glo.set_global_var("train_status", "training")
     global_model_path = glo.get_global_var("global_model_path")
     sub_model_path = glo.get_global_var("sub_model_path")
-    epoch = 20
+    epoch = 200
     x_train, y_train, x_test, y_test = load_all_dataset(dataset_path, features, test_size=0.5)
 
     startTime = time.time()
