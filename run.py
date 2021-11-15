@@ -9,7 +9,7 @@ def create_app(paras):
     port = paras["port"]
     id = paras["id"]
     clients_num = paras["clients_num"]
-    os.system(f"python app.py -p {port} -i {id} -n {clients_num}")
+    os.system(f"python3 app.py -p {port} -i {id} -n {clients_num}")
 
 
 if __name__ == '__main__':
@@ -23,6 +23,6 @@ if __name__ == '__main__':
     i = 1
     while i <= clients_num:
         port = start_port + i
-        id = i - 1
+        id = i
         executor.submit(create_app, ({"port": port, "id": id, "clients_num": clients_num}))
         i += 1
