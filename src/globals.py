@@ -10,7 +10,7 @@ parameters should be set:
 def __init():
     global _global_dict
     _global_dict = {}
-    _global_dict["train_status"] = "todo"       # train_status has 2 status { "todo", "training" }
+    _global_dict["train_status"] = "todo"       # train_status has 3 status { "todo", "training", "finished" }
     _global_dict["merge_status"] = "todo"       # merge_status has 3 status { "todo", "merging", "finished" }
     _global_dict["download_status"] = "todo"        # download_status has 3 status { "todo", "downloading", "finished" }
     _global_dict["update_status"] = "todo"      # update_status has 2 status { "todo", "updating" }

@@ -41,14 +41,27 @@ def printLog(str):
 def submit_submodel():
     money = request.json["money"]
     printLog(f"money: {money}")
-    submodel_path = glo.get_global_var("sub_model_path")
-    if glo.get_global_var("train_status") == "training":
-        return json.dumps({"status": "training"})
-    # if not has_submodel():
-    #     train_one_model()
+    if glo.get_global_var("train_status") == "todo":
+        executor.submit(train_working)
+        return json.dumps({"status": "start training"})
+    elif glo.get_global_var("train_status") == "training":
+        return json.dumps({"status": "training..."})
+    else:
+        printLog("here")
+        train_job_info_path = f"{glo.get_global_var('job_info_path')}/train_job.json"
+        f = open(train_job_info_path, 'r+')
+        job = json.load(f)
+        printLog("swarm_id returned.")
+        glo.set_global_var("train_status", "todo")
+        return job
+
+
+def train_working():
     printLog("start training...")
+    glo.set_global_var("train_status", "training")
     train_one_model()
     printLog("train finished.")
+    submodel_path = glo.get_global_var("sub_model_path")
     data = {'file': open(submodel_path, 'rb')}
     response = requests.post(f'http://{swarm_server}/upload_to_swarm', files=data)
 
@@ -56,7 +69,10 @@ def submit_submodel():
     ret = {"swarm_id": response.json()["swarm_id"]}
     printLog(ret)
     printLog("model uploaded.")
-    return ret
+    train_job_info_path = f"{glo.get_global_var('job_info_path')}/train_job.json"
+    with open(train_job_info_path, 'w+') as f:
+        json.dump(ret, f)
+    glo.set_global_var("train_status", "finished")
 
 
 @app.route("/infoWork", methods=['POST'])
@@ -74,8 +90,8 @@ def merge_models():
         return json.dumps({"status": "merging"})
     else:
         printLog("prepare to return...")
-        job_info_path = glo.get_global_var("job_info_path")
-        f = open(job_info_path, 'r+')
+        merge_job_info_path = f"{glo.get_global_var('job_info_path')}/merge_job.json"
+        f = open(merge_job_info_path, 'r+')
         job = json.load(f)
         glo.set_global_var("merge_status", "todo")
         printLog("merge results returned.")
@@ -124,8 +140,8 @@ def merge_models_work(model_ids):
     ret = {"models": model_ids, "scores": scores["clients_scores"], "fscore": scores["global_score"],
            "fmodel": response.json()['swarm_id'], "stop": is_stop}
     printLog(ret)
-    job_info_path = glo.get_global_var("job_info_path")
-    with open(job_info_path, 'w+') as f:
+    merge_job_info_path = f"{glo.get_global_var('job_info_path')}/merge_job.json"
+    with open(merge_job_info_path, 'w+') as f:
         json.dump(ret, f)
 
     printLog("all tasks have been done.")
@@ -218,8 +234,8 @@ def get_host_ip():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=False)
     # parser.add_argument('-h', '--host', dest='host', type=str, default='0.0.0.0')
-    parser.add_argument('-p', '--port', dest='port', type=str, default='4000')
-    parser.add_argument("-i", "--id", dest='id', type=int, default=0)
+    parser.add_argument('-p', '--port', dest='port', type=str, default='4001')
+    parser.add_argument("-i", "--id", dest='id', type=int, default=1)
     parser.add_argument("-n", "--number", dest='clients_num', type=int, default=1)
     args = parser.parse_args()
     # app.run(debug=True, host='10.128.205.41', port='4000')
@@ -241,7 +257,7 @@ if __name__ == '__main__':
     glo.set_global_var("client_id", client_id)
     glo.set_global_var("global_model_path", f"models/global/client-{client_id}/global_model.npy")
     glo.set_global_var("sub_model_path", f"models/clients/client-{client_id}/sub_model.npy")
-    glo.set_global_var("job_info_path", f"jobs_info/client-{client_id}/job.json")
+    glo.set_global_var("job_info_path", f"jobs_info/client-{client_id}")
     executor = ThreadPoolExecutor(10)
     swarm_server = f"{swarm_server_host}:{swarm_server_port}"
     dapp_port = int(local_port) + 1000
