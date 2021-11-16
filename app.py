@@ -1,8 +1,11 @@
+import datetime
+
 import src.globals as glo
 glo.__init()
 
 from flask import Flask, render_template, request, Response
 from src.model_funcs import train_one_model, merge_models_and_test, has_submodel, update_model
+from src.log import printLog
 import requests
 import os
 import json
@@ -32,10 +35,6 @@ def train():
         executor.submit(train_one_model)
         return json.dumps({"status": "start training..."})
 
-
-def printLog(str):
-    client_id = glo.get_global_var("client_id")
-    print(f"client-{client_id}: {str}")
 
 @app.route("/infoSubmit", methods=['POST'])
 def submit_submodel():
@@ -251,6 +250,8 @@ if __name__ == '__main__':
     local_port = args.port
     client_id = args.id
     clients_num = args.clients_num
+    now = datetime.datetime.now()
+    date = f"{now.year}{now.month}{now.day}"
 
     # Initialization
     glo.set_global_var("clients_num", clients_num)
@@ -258,23 +259,24 @@ if __name__ == '__main__':
     glo.set_global_var("global_model_path", f"models/global/client-{client_id}/global_model.npy")
     glo.set_global_var("sub_model_path", f"models/clients/client-{client_id}/sub_model.npy")
     glo.set_global_var("job_info_path", f"jobs_info/client-{client_id}")
+    glo.set_global_var("log_path", f"logs/{date}/client-{client_id}.log")
     executor = ThreadPoolExecutor(10)
     swarm_server = f"{swarm_server_host}:{swarm_server_port}"
     dapp_port = int(local_port) + 1000
     dapp_address = f"localhost:{dapp_port}"
     local_address = f"{local_host}:{local_port}"
-    printLog(local_address)
-    # create directory
 
+    # create directory
     path_list = [f"models/global/client-{client_id}",
                  f"models/clients/client-{client_id}",
                  f"models/downloads/client-{client_id}",
-                 f"jobs_info/client-{client_id}"]
+                 f"jobs_info/client-{client_id}",
+                 f"logs/{date}"]
     for path in path_list:
         if not os.path.exists(path):
             os.makedirs(path)
 
-    app.run(debug=True, host=local_host, port=args.port)
+    app.run(host=local_host, port=args.port)
 
     # multiprocessing
     # client_nums = 5

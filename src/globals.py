@@ -20,6 +20,7 @@ def __init():
     _global_dict["global_model_path"] = ""
     _global_dict["sub_model_path"] = ""
     _global_dict["job_info_path"] = ""
+    _global_dict["log_path"] = ""
 
 
 

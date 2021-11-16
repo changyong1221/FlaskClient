@@ -1,3 +1,4 @@
+import datetime
 import socket
 import os
 import src.globals as glo
@@ -32,7 +33,7 @@ def create_model():
 def train_one_model():
     global_model_path = "../models/global/client-1/global_model.npy"
     sub_model_path = "../models/train/2.npy"
-    epoch = 200
+    epoch = 20
     x_train, y_train, x_test, y_test = load_all_dataset(dataset_path, features, test_size=0.5)
 
     client_id = 1
@@ -45,7 +46,7 @@ def train_one_model():
               y=y_train,
               batch_size=128,
               epochs=epoch,
-              verbose=2)
+              verbose=0)
     loss, acc = model.evaluate(x=x_test,
                                y=y_test,
                                batch_size=128)
@@ -136,5 +137,6 @@ def test_federated_model():
 if __name__ == '__main__':
     # train_one_model()
     # test_one_model()
-    test_federated_model()
+    # test_federated_model()
     # merge_models_and_test()
+    pass

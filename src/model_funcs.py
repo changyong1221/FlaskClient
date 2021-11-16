@@ -2,6 +2,7 @@ import os
 import time
 import shutil
 import src.globals as glo
+from src.log import printLog
 from src.fedlib import *
 from src.dataset_funcs import load_client_dataset, load_all_dataset
 from keras.models import Sequential
@@ -13,11 +14,6 @@ dataset_path = "datasets/computer_status_dataset.csv"
 features = ['cpu_usage', 'memory_usage', 'disk_usage', 'num_tasks',
             'bandwidth', 'mips', 'cpu_freq', 'cpu_cache', 'ram',
             'ram_freq', 'disk', 'pes_num', 'priority']
-
-def print_log(s):
-    with open('log.log', 'a+') as f:
-        f.write(s + "\n")
-        print(s)
 
 
 def create_model():
@@ -53,7 +49,7 @@ def save_pic(path, acc, loss, name):
 def train_one_model():
     global_model_path = glo.get_global_var("global_model_path")
     sub_model_path = glo.get_global_var("sub_model_path")
-    epoch = 40
+    epoch = 400
     x_train, y_train, x_test, y_test = load_all_dataset(dataset_path, features, test_size=0.5)
 
     startTime = time.time()
@@ -67,14 +63,14 @@ def train_one_model():
               y=y_train,
               batch_size=128,
               epochs=epoch,
-              verbose=2)
+              verbose=1)
     loss, acc = model.evaluate(x=x_test,
                                y=y_test,
                                batch_size=128)
     model.save_model(sub_model_path, weight=True)
     model.upload()
-    print_log(f"Client-ID:{client_id} , loss:{loss} , acc:{acc} , Time:{time.time() - startTime}")
-    print("training done.")
+    printLog(f"Client-ID:{client_id} , loss:{loss} , acc:{acc} , Time:{time.time() - startTime}")
+    printLog("training done.")
 
 
 def has_submodel():
@@ -115,7 +111,7 @@ def train_models():
         model.save_model(model_path, weight=True)
         # model.upload()
 
-        print_log(f"Client-ID:{idx} , loss:{loss} , acc:{acc} , Time:{time.time() - startTime}")
+        printLog(f"Client-ID:{idx} , loss:{loss} , acc:{acc} , Time:{time.time() - startTime}")
 
 
 # run test dataset for a list of submodels and return test scores
@@ -149,27 +145,34 @@ def merge_models_and_test():
         client_acc_list.append(acc)
         client_score_list.append(int(acc*1000))
         client_loss_list.append(loss)
-        print_log(f'client({idx})_loss:{loss}, client({idx})_acc:{acc}')
+        printLog(f'client({idx})_loss:{loss}, client({idx})_acc:{acc}')
 
     # merge global model and test
     global_model = FedServer(model=create_model())
+    printLog("start loading global model...")
     global_model.load_client_weights(models_path_list)
+    printLog("global model loaded.")
+    printLog("start doing weights average...")
     global_model.fl_average()
+    printLog("weights average done.")
+    printLog("start compiling global model...")
     global_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    printLog("global model compiled.")
     global_acc_list = []
     global_loss_list = []
+    printLog("start evaluating global model...")
     for idx in range(client_num):
         loss, acc = global_model.evaluate(x=x_test[idx * x_test_per:(idx + 1) * x_test_per],
                                           y=y_test[idx * x_test_per:(idx + 1) * x_test_per], batch_size=128)
         global_acc_list.append(acc)
         global_loss_list.append(loss)
-    print_log(
+    printLog(
         f'global_avg_loss:{np.mean(global_loss_list)}, global_avg_acc:{np.mean(global_acc_list)}')
 
     global_model.save_model(global_model_path, weight=True)
     global_model_score = np.mean(global_acc_list) * 1000
     retSet = {"clients_scores": client_score_list, "global_score": int(global_model_score)}
-    print(retSet)
+    printLog(retSet)
     return retSet
 
 
@@ -186,7 +189,7 @@ def update_model():
     client_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     client_loss, client_acc = client_model.evaluate(x=x_test, y=y_test, batch_size=128)
     sub_model_score = client_acc * 1000
-    print_log(f'client({client_id})_loss:{client_loss}, client({client_id})_acc:{client_acc}')
+    printLog(f'client({client_id})_loss:{client_loss}, client({client_id})_acc:{client_acc}')
 
     # get test score of global_model
     global_model = FedServer(model=create_model())
@@ -195,18 +198,18 @@ def update_model():
     global_loss, global_acc = global_model.evaluate(x=x_test, y=y_test, batch_size=128)
     global_model_score = global_acc * 1000
 
-    print(f"sub_model_score: {sub_model_score}")
-    print(f"global_model_score: {global_model_score}")
+    printLog(f"sub_model_score: {sub_model_score}")
+    printLog(f"global_model_score: {global_model_score}")
     if global_model_score > sub_model_score:
-        print("global model is better.")
-        print("updating local model...")
+        printLog("global model is better.")
+        printLog("updating local model...")
         if os.path.exists(global_model_path):
             shutil.copyfile(global_model_path, sub_model_path)
-        print("local model updated.")
+        printLog("local model updated.")
     else:
-        print("local model is better.")
+        printLog("local model is better.")
         os.remove(global_model_path)
-        print("global model dropped.")
+        printLog("global model dropped.")
 
 # if __name__ == '__main__':
 #     update_model()
