@@ -1,5 +1,6 @@
 import src.globals as glo
 
+
 def printLog(strs):
     client_id = glo.get_global_var("client_id")
     log_str = f"client-{client_id}: {strs}"
@@ -11,3 +12,10 @@ def saveLog(strs):
     file_name = glo.get_global_var("log_path")
     with open(file_name, 'a+') as f:
         f.write(strs + "\n")
+
+
+if __name__ == "__main__":
+    lst = [1, 2, 3]
+    print(lst)
+    lst.clear()
+    print(lst)

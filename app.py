@@ -6,6 +6,8 @@ glo.__init()
 from flask import Flask, render_template, request, Response
 from src.model_funcs import train_one_model, merge_models_and_test, has_submodel, update_model
 from src.log import printLog
+from src.get_data import DataSet
+from src.utils import model_file_wrapper
 import requests
 import os
 import json
@@ -27,26 +29,25 @@ def root():
     return render_template('Index.html')
 
 
-@app.route("/train", methods=['POST'])
+@app.route("/train", methods=['GET'])
 def train():
     if glo.get_global_var("train_status") == "training":
         return json.dumps({"status": "training"})
     else:
-        executor.submit(train_one_model)
+        executor.submit(train_one_model, (dataset))
         return json.dumps({"status": "start training..."})
 
 
-@app.route("/infoSubmit", methods=['POST'])
+@app.route("/infoSubmit", methods=['GET'])
 def submit_submodel():
-    money = request.json["money"]
-    printLog(f"money: {money}")
+    # money = request.json["money"]
+    # printLog(f"money: {money}")
     if glo.get_global_var("train_status") == "todo":
         executor.submit(train_working)
         return json.dumps({"status": "start training"})
     elif glo.get_global_var("train_status") == "training":
         return json.dumps({"status": "training..."})
     else:
-        printLog("here")
         train_job_info_path = f"{glo.get_global_var('job_info_path')}/train_job.json"
         f = open(train_job_info_path, 'r+')
         job = json.load(f)
@@ -58,10 +59,12 @@ def submit_submodel():
 def train_working():
     printLog("start training...")
     glo.set_global_var("train_status", "training")
-    train_one_model()
+    train_one_model(dataset)
     printLog("train finished.")
     submodel_path = glo.get_global_var("sub_model_path")
-    data = {'file': open(submodel_path, 'rb')}
+    client_id = glo.get_global_var("client_id")
+    wrapped_model_data = model_file_wrapper(submodel_path)
+    data = {f'{client_id}.pkl': wrapped_model_data}
     response = requests.post(f'http://{swarm_server}/upload_to_swarm', files=data)
 
     # printLog(response.text)
@@ -74,15 +77,17 @@ def train_working():
     glo.set_global_var("train_status", "finished")
 
 
-@app.route("/infoWork", methods=['POST'])
+@app.route("/infoWork", methods=['GET'])
 def merge_models():
     if glo.get_global_var("merge_status") == "todo":
-        model_ids = request.json["models"]
-        # model_ids = ["10a1b887db6eb16f1c5e73da51c6b645dd0cd0b4bd17c183bdd205e502e0c29e",
-        #              "01d8de78a6e0a975b5f3eed94600d2d92577348cec226776438de507b07eece1",
-        #              "441707c3e702a4d61d62122ace5c6712c060d8d0fa7868108c2a9a96678b12aa",
-        #              "8ed728a48823854fd87a10265e7364a377be31869d4e211523348851a2e7ac9b",
-        #              "9ca9fa2d8b5b14ed64054f9c525200cde39ef7673ab3e8d438d610fba719ea04"]
+        # model_ids = request.json["models"]
+        model_ids = ["6a1868af9913d472b79ea6db07a0a19f105a700789dc5231d60b5e16b07584fb",
+                     "1986edaaf2e2ef29adb310bce2c461fa065e2c6d5be8db08498f4b45fd66c927",
+                     "3caa47346a5523df736d5d259e6d82412b87725aaad470ac2c413815406d7325"]
+                     # "6a4486afede96d6cdeb7de4f84c8af37bb95ee7dd846918e5a3a86131c3ea2d1",
+                     # "8f788788ae661f9e6537f6de699ac47eabcd47c6022098923b1be3c6524e4396",
+                     # "c4a3808ff57fb41a23bad2ce1573245d5d741ca9778019c6b1e985baa538cad0",
+                     # "7a588b97e5f236c539ec5db147c079600ffc736b450d2440638ccf134d27cd92"]
         executor.submit(merge_models_work, (model_ids))
         return json.dumps({"status": "request received"})
     elif glo.get_global_var("merge_status") == "merging":
@@ -100,13 +105,14 @@ def merge_models():
 def merge_models_work(model_ids):
     glo.set_global_var("merge_status", "merging")
     glo.set_global_var("merge_clients_num", len(model_ids))
+    glo.set_global_var("download_num", len(model_ids))
     # get all submodels from swarm
     printLog("start downloading submodels.")
     while glo.get_global_var("download_status") == "downloading":
         time.sleep(3)
     glo.set_global_var("download_status", "downloading")
-    for idx, swarm_id in enumerate(model_ids):
-        data = {"swarm_id": swarm_id, "client_id": idx, "is_global": False, "client_address": local_address}
+    for swarm_id in model_ids:
+        data = {"swarm_id": swarm_id, "is_global": False, "client_address": local_address}
         printLog(data)
         response = requests.post(f'http://{swarm_server}/download_from_swarm', json=data)
 
@@ -121,13 +127,14 @@ def merge_models_work(model_ids):
     glo.set_global_var("download_status", "todo")
     printLog("submodels downloading finished.")
     printLog("merge start.")
-    scores = merge_models_and_test()
+    scores = merge_models_and_test(dataset)
     printLog("merge finished.")
 
     # upload global model
     printLog("start uploading global model.")
     global_model_path = glo.get_global_var("global_model_path")
-    file = {'file': open(global_model_path, 'rb')}
+    wrapped_model_data = model_file_wrapper(global_model_path)
+    file = {'global_model.pkl': wrapped_model_data}
     response = requests.post(f'http://{swarm_server}/upload_to_swarm', files=file)
     printLog("global model uploading finished.")
 
@@ -145,6 +152,7 @@ def merge_models_work(model_ids):
 
     printLog("all tasks have been done.")
     glo.set_global_var("merge_status", "finished")
+    glo.get_global_var("merge_clients_id_list").clear()
 
 
 # has similar function as "/infoSubmit"
@@ -164,7 +172,7 @@ def download_update_global_model(paras):
     score = paras['score']
     is_stop = paras['stop']
 
-    data = {"swarm_id": swarm_id, "client_id": client_id, "is_global": True, "client_address": local_address}
+    data = {"swarm_id": swarm_id, "is_global": True, "client_address": local_address}
     printLog(data)
     while glo.get_global_var("download_status") == "downloading":
         time.sleep(3)
@@ -172,7 +180,7 @@ def download_update_global_model(paras):
     printLog("downloading global model...")
     response = requests.post(f'http://{swarm_server}/download_from_swarm', json=data)
     printLog("global model downloaded.")
-    update_model()
+    update_model(dataset)
     glo.set_global_var("update_status", "todo")
 
 
@@ -182,41 +190,45 @@ def receive():
     client_id = glo.get_global_var("client_id")
     is_global_str = request.values['is_global']
     if is_global_str == "True":
-        printLog("true")
+        printLog("is_global: true")
         is_global = True
     else:
-        printLog('false')
+        printLog('is_global: false')
         is_global = False
-    merge_client_id = int(request.values['client_id'])
+        merge_client_id = int(request.values['client_id'])
+        glo.get_global_var("merge_clients_id_list").append(merge_client_id)
+        printLog(f"merge_client_id: {merge_client_id}")
 
-    ff = request.files['file']
+    for elem in request.files:
+        filename = elem
+    printLog(f"filename: {filename}")
+    ff = request.files[filename]
     if is_global:
         save_path = f'models/global/client-{client_id}/'
-        filename = 'global_model.npy'
         ff.save(os.path.join(save_path, filename))
         glo.set_global_var("download_status", "todo")
     else:
         save_path = f'models/downloads/client-{client_id}/'
-        filename = f'{merge_client_id}.npy'
         ff.save(os.path.join(save_path, filename))
         printLog(f"model[{merge_client_id}] downloaded.")
-        last_client_id = glo.get_global_var("merge_clients_num") - 1
-        if merge_client_id == last_client_id:
+        if glo.get_global_var("download_num") > 0:
+            glo.set_global_var("download_num", glo.get_global_var("download_num") - 1)
+        if glo.get_global_var("download_num") == 0:
             glo.set_global_var("download_status", "finished")
     return json.dumps({'receive': 'finished', 'status': 'success'})
 
 
 #  get newest global model
-@app.route("/get_newest_global")
+@app.route("/get_newest_global", methods=['GET'])
 def get_newest_global_model():
     if glo.get_global_var("update_status") == "updating":
         return json.dumps({"status": "updating"})
     glo.set_global_var("update_status", "updating")
-    response = request.post(f"http://{dapp_address}/interface/getNewestModel")
-    # swarm_id = "739b52501f986cb8a4de782ca411cc643b3c481416f4e173c2d02bf859bee966"
-    printLog(response.json())
-    executor.submit(download_update_global_model, (response.json()))
-    # executor.submit(download_update_global_model, (swarm_id))
+    # response = request.post(f"http://{dapp_address}/interface/getNewestModel")
+    paras = {"model": "09fff06b12bcf744a142437d14f781532cf69f7782c86b1540925402811d8f78", "score": 101, "stop": False}
+    # printLog(response.json())
+    # executor.submit(download_update_global_model, (response.json()))
+    executor.submit(download_update_global_model, (paras))
     return Response(json.dumps({'status': 'success'}), mimetype="application/json")
 
 
@@ -230,12 +242,13 @@ def get_host_ip():
         s.close()
     return ip
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=False)
     # parser.add_argument('-h', '--host', dest='host', type=str, default='0.0.0.0')
     parser.add_argument('-p', '--port', dest='port', type=str, default='4001')
     parser.add_argument("-i", "--id", dest='id', type=int, default=1)
-    parser.add_argument("-n", "--number", dest='clients_num', type=int, default=1)
+    parser.add_argument("-n", "--number", dest='clients_num', type=int, default=10)
     args = parser.parse_args()
     # app.run(debug=True, host='10.128.205.41', port='4000')
     # app.run(debug=True, host=local_host, port=local_port)
@@ -249,15 +262,16 @@ if __name__ == '__main__':
     # client_id = 0
     local_port = args.port
     client_id = args.id
+    client_id = 4
     clients_num = args.clients_num
     now = datetime.datetime.now()
-    date = f"{now.year}{now.month}{now.day}"
+    date = f"{now.year}-{now.month}-{now.day}"
 
     # Initialization
     glo.set_global_var("clients_num", clients_num)
     glo.set_global_var("client_id", client_id)
-    glo.set_global_var("global_model_path", f"models/global/client-{client_id}/global_model.npy")
-    glo.set_global_var("sub_model_path", f"models/clients/client-{client_id}/sub_model.npy")
+    glo.set_global_var("global_model_path", f"models/global/client-{client_id}/global_model.pkl")
+    glo.set_global_var("sub_model_path", f"models/clients/client-{client_id}/sub_model.pkl")
     glo.set_global_var("job_info_path", f"jobs_info/client-{client_id}")
     glo.set_global_var("log_path", f"logs/{date}/client-{client_id}.log")
     executor = ThreadPoolExecutor(10)
@@ -275,6 +289,9 @@ if __name__ == '__main__':
     for path in path_list:
         if not os.path.exists(path):
             os.makedirs(path)
+
+    is_iid = False
+    dataset = DataSet(clients_num, is_iid)
 
     app.run(host=local_host, port=args.port)
 
