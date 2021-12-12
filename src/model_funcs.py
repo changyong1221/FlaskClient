@@ -2,9 +2,10 @@ import os
 import time
 import shutil
 import src.globals as glo
-from src.log import printLog
+from src.log import print_log
 from src.net_core import Mnist_2NN
 from src.fed_core import FedClient, FedServer
+from src.utils import save_results
 import torch.nn.functional as F
 from torch import optim
 
@@ -35,8 +36,10 @@ def train_one_model(dataset):
     model.save_model(sub_model_path, weight=True)
     model.upload()
 
-    printLog(f"Client-ID:{client_id} , loss:{loss} , acc:{acc} , Time:{time.time() - startTime}")
-    printLog("training done.")
+    save_results(round(loss, 4), "LOSS", is_global=False)
+    save_results(round(acc, 4), "ACC", is_global=False)
+    print_log(f"Client-ID:{client_id} , loss:{loss} , acc:{acc} , Time:{time.time() - startTime}")
+    print_log("training done.")
 
 
 def has_submodel():
@@ -61,7 +64,7 @@ def merge_models_and_test(dataset):
     x_test, y_test = dataset.get_test_dataset()
     models_path_list = []
     for merge_idx in merge_clients_id_list:
-        printLog(f'models/downloads/client-{client_id}/{merge_idx}.pkl')
+        print_log(f'models/downloads/client-{client_id}/{merge_idx}.pkl')
         models_path_list.append(f'models/downloads/client-{client_id}/{merge_idx}.pkl')
 
     # get test scores of submodels
@@ -73,24 +76,25 @@ def merge_models_and_test(dataset):
         acc = client_model.evaluate(x_test, y_test, batch_size=64)
         client_acc_list.append(acc)
         client_score_list.append(int(acc*1000))
-        printLog(f'client({merge_clients_id_list[i]})_model_acc: {acc}')
+        print_log(f'client({merge_clients_id_list[i]})_model_acc: {acc}')
 
     # merge global model and test
     global_model = FedServer(net=Mnist_2NN())
-    printLog("start loading global model...")
+    print_log("start loading global model...")
     global_model.load_client_weights(models_path_list)
-    printLog("global model loaded.")
-    printLog("start doing weights average...")
+    print_log("global model loaded.")
+    print_log("start doing weights average...")
     global_model.fed_avg()
-    printLog("weights average done.")
-    printLog("start evaluating global model...")
+    print_log("weights average done.")
+    print_log("start evaluating global model...")
     global_acc = global_model.evaluate(x_test, y_test, batch_size=64)
-    printLog(f'global_model_acc: {global_acc}')
+    print_log(f'global_model_acc: {global_acc}')
 
     global_model.save_model(global_model_path, weight=True)
     global_model_score = global_acc * 1000
+    save_results(round(global_acc, 4), "ACC", is_global=True)
     retSet = {"clients_scores": client_score_list, "global_score": int(global_model_score)}
-    printLog(retSet)
+    print_log(retSet)
     return retSet
 
 
@@ -113,19 +117,19 @@ def update_model(dataset):
     global_acc = global_model.evaluate(x_test, y_test, batch_size=64)
     global_model_score = global_acc * 1000
 
-    printLog(f"sub_model_score: {sub_model_score}")
-    printLog(f"global_model_score: {global_model_score}")
+    print_log(f"sub_model_score: {sub_model_score}")
+    print_log(f"global_model_score: {global_model_score}")
     if global_model_score > sub_model_score:
-        printLog("global model is better.")
-        printLog("updating local model...")
+        print_log("global model is better.")
+        print_log("updating local model...")
         if os.path.exists(global_model_path):
             shutil.copyfile(global_model_path, sub_model_path)
-        printLog("local model updated.")
+        print_log("local model updated.")
     else:
-        printLog("local model is better.")
+        print_log("local model is better.")
         os.remove(global_model_path)
-        printLog("global model dropped.")
-    printLog("update process finished.")
+        print_log("global model dropped.")
+    print_log("update process finished.")
 
 
 if __name__ == '__main__':

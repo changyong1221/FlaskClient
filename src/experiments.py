@@ -168,7 +168,7 @@ def train_one_model_roundly(client_id, rounds):
 
 if __name__ == '__main__':
     # test_federated()
-    # train_one_model()
+    train_one_model(1)
     # test_one_model()
     # test_federated_model(10)
 
@@ -181,6 +181,6 @@ if __name__ == '__main__':
     #     test_federated_model(i + 1)
 
     # train one model 1000 rounds
-    train_one_model_roundly(1, 10)
+    # train_one_model_roundly(1, 10)
 
 

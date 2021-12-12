@@ -3,7 +3,6 @@ import numpy as np
 import gzip
 import os
 import torch
-from src.log import printLog
 
 
 class DataSet(object):
@@ -22,7 +21,6 @@ class DataSet(object):
         self.mnist_dataset_construct()
 
     def mnist_dataset_construct(self):
-        printLog("loading dataset...")
         data_dir = 'datasets'
         train_images_path = os.path.join(data_dir, 'train-images-idx3-ubyte.gz')
         train_labels_path = os.path.join(data_dir, 'train-labels-idx1-ubyte.gz')
@@ -62,7 +60,6 @@ class DataSet(object):
 
         self.test_data = torch.tensor(test_images)
         self.test_label = torch.argmax(torch.tensor(test_labels), dim=1)
-        printLog("dataset loaded.")
 
     def get_test_dataset(self):
         return self.test_data, self.test_label
