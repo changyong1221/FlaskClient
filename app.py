@@ -1,5 +1,3 @@
-import datetime
-
 import src.globals as glo
 glo.__init()
 
@@ -27,7 +25,7 @@ def root():
     return render_template('Index.html')
 
 
-@app.route("/train", methods=['GET'])
+@app.route("/train", methods=['POST'])
 def train():
     if glo.get_global_var("train_status") == "training":
         return json.dumps({"status": "training"})
@@ -36,10 +34,10 @@ def train():
         return json.dumps({"status": "start training..."})
 
 
-@app.route("/infoSubmit", methods=['GET'])
+@app.route("/infoSubmit", methods=['POST'])
 def submit_submodel():
-    # money = request.json["money"]
-    # print_log(f"money: {money}")
+    money = request.json["money"]
+    print_log(f"money: {money}")
     if glo.get_global_var("train_status") == "todo":
         executor.submit(train_working)
         return json.dumps({"status": "start training"})
@@ -64,7 +62,7 @@ def train_working():
     cid = upload_to_ipfs(client_id, False, submodel_path)
 
     # print_log(response.text)
-    ret = {"Hash": cid}
+    ret = {"cid": cid}
     print_log(ret)
     print_log("model uploaded.")
     train_job_info_path = f"{glo.get_global_var('job_info_path')}/train_job.json"
@@ -73,14 +71,14 @@ def train_working():
     glo.set_global_var("train_status", "finished")
 
 
-@app.route("/infoWork", methods=['GET'])
+@app.route("/infoWork", methods=['POST'])
 def merge_models():
     if glo.get_global_var("merge_status") == "todo":
-        # model_ids = request.json["models"]
-        model_ids = ["QmR9aSSwCv4ANPFRu7QnP3XZXh8XoSrw6S81tKUaHoawL5",
-                     "QmRRKQmL82473HteXgGcaZGbnFCi4L5j7eDsmRuWNgXVZW",
-                     "QmP1iU7kZJ7ExJvsHX8ddkN4RjRMRhMShExDdjsfQPhqyH",
-                     "QmeoNqpk4MuLY74CiARbGFcXNwv8T2PUMSkU34mU29rZaD"]
+        model_ids = request.json["models"]
+        # model_ids = ["QmQs9BHpYyeNUSkfCBJAxccsCZ8uBh3MFxvtprUTadve66000000000000000000",
+        #              "QmTFLTt94Km1A5w2TXSBPBsKu46c64795tFURQGNk13tF7000000000000000000",
+        #              "QmP1iU7kZJ7ExJvsHX8ddkN4RjRMRhMShExDdjsfQPhqyH000000000000000000",
+        #              "QmeoNqpk4MuLY74CiARbGFcXNwv8T2PUMSkU34mU29rZaD000000000000000000"]
         executor.submit(merge_models_work, (model_ids))
         return json.dumps({"status": "request received"})
     elif glo.get_global_var("merge_status") == "merging":
@@ -159,16 +157,16 @@ def download_and_update_global_model(paras):
 
 
 #  get newest global model
-@app.route("/getNewestGlobal", methods=['GET'])
+@app.route("/getNewestGlobal", methods=['POST'])
 def get_newest_global_model():
     if glo.get_global_var("update_status") == "updating":
         return json.dumps({"status": "updating"})
     glo.set_global_var("update_status", "updating")
-    # response = request.post(f"http://{dapp_address}/interface/getNewestModel")
-    paras = {"model": "QmTPm5QVSnD7NgAjYdMx4wxdYgYfQAzQUkhbaCdQnxuDAX", "score": 194, "stop": False}
+    response = request.post(f"http://{dapp_address}/interface/getNewestModel")
+    # paras = {"model": "QmTPm5QVSnD7NgAjYdMx4wxdYgYfQAzQUkhbaCdQnxuDAX", "score": 194, "stop": False}
     # print_log(response.json())
-    # executor.submit(download_and_update_global_model, (response.json()))
-    executor.submit(download_and_update_global_model, (paras))
+    executor.submit(download_and_update_global_model, (response.json()))
+    # executor.submit(download_and_update_global_model, (paras))
     return Response(json.dumps({'status': 'success'}), mimetype="application/json")
 
 
@@ -194,11 +192,11 @@ if __name__ == '__main__':
     # app.run(debug=True, host=local_host, port=local_port)
 
     # Attention: some parameters should be set in the following before first run
-    local_host = get_host_ip()
+    local_host = "127.0.0.1"
     # local_port = 4001
     local_port = args.port
     client_id = args.id
-    client_id = 1
+    # client_id = 2
     clients_num = args.clients_num
 
 
