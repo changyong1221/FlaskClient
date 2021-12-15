@@ -19,7 +19,7 @@ if __name__ == '__main__':
     clients_num = args.number
     if clients_num <= 0:
         print("Error: parameter n >= 1 !")
-    start_port = 4000
+    start_port = 10000
     i = 1
     while i <= clients_num:
         port = start_port + i

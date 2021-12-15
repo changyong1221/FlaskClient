@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 import argparse
 import socket
 from multiprocessing import Process
+import shutil
 
 
 app = Flask(__name__)
@@ -36,6 +37,10 @@ def train():
 
 @app.route("/infoSubmit", methods=['POST'])
 def submit_submodel():
+    if glo.get_global_var("update_status") is not "todo":
+        return json.dumps({"status": "updating"})
+    if glo.get_global_var("merge_status") is not "todo":
+        return json.dumps({"status": "merging"})
     money = request.json["money"]
     print_log(f"money: {money}")
     if glo.get_global_var("train_status") == "todo":
@@ -73,6 +78,10 @@ def train_working():
 
 @app.route("/infoWork", methods=['POST'])
 def merge_models():
+    if glo.get_global_var("update_status") is not "todo":
+        return json.dumps({"status": "updating"})
+    if glo.get_global_var("train_status") is not "todo":
+        return json.dumps({"status": "training"})
     if glo.get_global_var("merge_status") == "todo":
         model_ids = request.json["models"]
         # model_ids = ["QmQs9BHpYyeNUSkfCBJAxccsCZ8uBh3MFxvtprUTadve66000000000000000000",
@@ -80,7 +89,7 @@ def merge_models():
         #              "QmP1iU7kZJ7ExJvsHX8ddkN4RjRMRhMShExDdjsfQPhqyH000000000000000000",
         #              "QmeoNqpk4MuLY74CiARbGFcXNwv8T2PUMSkU34mU29rZaD000000000000000000"]
         executor.submit(merge_models_work, (model_ids))
-        return json.dumps({"status": "request received"})
+        return json.dumps({"status": "request received, start merging"})
     elif glo.get_global_var("merge_status") == "merging":
         return json.dumps({"status": "merging"})
     else:
@@ -157,17 +166,22 @@ def download_and_update_global_model(paras):
 
 
 #  get newest global model
-@app.route("/getNewestGlobal", methods=['POST'])
+@app.route("/getNewestModel", methods=['POST'])
 def get_newest_global_model():
+    if glo.get_global_var("train_status") is not "todo":
+        return json.dumps({"status": "training"})
+    if glo.get_global_var("merge_status") is not "todo":
+        return json.dumps({"status": "merging"})
     if glo.get_global_var("update_status") == "updating":
         return json.dumps({"status": "updating"})
     glo.set_global_var("update_status", "updating")
-    response = request.post(f"http://{dapp_address}/interface/getNewestModel")
-    # paras = {"model": "QmTPm5QVSnD7NgAjYdMx4wxdYgYfQAzQUkhbaCdQnxuDAX", "score": 194, "stop": False}
+    # response = request.post(f"http://{dapp_address}/interface/getNewestModel")
+    # paras = {"model": request.json["model"], "score": request.json["score"], "stop": request.json["stop"]}
     # print_log(response.json())
-    executor.submit(download_and_update_global_model, (response.json()))
+    # executor.submit(download_and_update_global_model, (response.json()))
+    executor.submit(download_and_update_global_model, (request.json))
     # executor.submit(download_and_update_global_model, (paras))
-    return Response(json.dumps({'status': 'success'}), mimetype="application/json")
+    return Response(json.dumps({'status': 'start updating'}), mimetype="application/json")
 
 
 # get ipv4 address of current machine
@@ -184,7 +198,7 @@ def get_host_ip():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=False)
     # parser.add_argument('-h', '--host', dest='host', type=str, default='0.0.0.0')
-    parser.add_argument('-p', '--port', dest='port', type=str, default='4001')
+    parser.add_argument('-p', '--port', dest='port', type=str, default='10001')
     parser.add_argument("-i", "--id", dest='id', type=int, default=1)
     parser.add_argument("-n", "--number", dest='clients_num', type=int, default=10)
     args = parser.parse_args()
@@ -192,7 +206,7 @@ if __name__ == '__main__':
     # app.run(debug=True, host=local_host, port=local_port)
 
     # Attention: some parameters should be set in the following before first run
-    local_host = "127.0.0.1"
+    local_host = get_host_ip()
     # local_port = 4001
     local_port = args.port
     client_id = args.id
@@ -207,7 +221,7 @@ if __name__ == '__main__':
     glo.set_global_var("sub_model_path", f"models/clients/client-{client_id}/sub_model.pkl")
     glo.set_global_var("job_info_path", f"jobs_info/client-{client_id}")
     executor = ThreadPoolExecutor(10)
-    dapp_port = int(local_port) + 1000
+    dapp_port = int(local_port) + 10000
     dapp_address = f"localhost:{dapp_port}"
     local_address = f"{local_host}:{local_port}"
 
@@ -218,10 +232,13 @@ if __name__ == '__main__':
                  f"jobs_info/client-{client_id}",
                  f"results/client-{client_id}",
                  f"results/global",
-                 f"pics/"]
+                 f"pics",
+                 f"logs"]
+    
     for path in path_list:
-        if not os.path.exists(path):
-            os.makedirs(path)
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        os.makedirs(path)
 
     is_iid = False
     dataset = DataSet(clients_num, is_iid)
