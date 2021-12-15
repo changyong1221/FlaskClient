@@ -193,6 +193,12 @@ def get_host_ip():
     finally:
         s.close()
     return ip
+    
+    
+def initialize_global_model():
+    global_model_path = glo.get_global_var("global_model_path")
+    initial_model_path = "initial_model/global_model.pkl"
+    shutil.copyfile(initial_model_path, global_model_path)
 
 
 if __name__ == '__main__':
@@ -242,6 +248,7 @@ if __name__ == '__main__':
 
     is_iid = False
     dataset = DataSet(clients_num, is_iid)
+    initialize_global_model()
 
     app.run(host=local_host, port=args.port)
 

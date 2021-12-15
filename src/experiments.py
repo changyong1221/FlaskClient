@@ -1,7 +1,7 @@
-from src.get_data import DataSet
-from src.net_core import Mnist_2NN
-from src.fed_core import FedClient, FedServer
-from src.utils import *
+from get_data import DataSet
+from net_core import Mnist_2NN
+from fed_core import FedClient, FedServer
+# from utils import *
 import torch.nn.functional as F
 from torch import optim
 import time
@@ -12,10 +12,17 @@ client_id = 1
 epoch = 10
 batch_size = 64
 learning_rate = 0.01
-dataset = DataSet(clients_num, False)
-x_test, y_test = dataset.get_test_dataset()
+# dataset = DataSet(clients_num, False)
+# x_test, y_test = dataset.get_test_dataset()
 
 
+def initialize_model():
+    save_dir = "../initialization_model/global_model.pkl"
+    model = FedClient(net=Mnist_2NN(), ID=0)
+    model.set_model_settings(loss_func=F.cross_entropy, optimizer=optim.SGD(model.net.parameters(), lr=learning_rate))
+    model.save_model(save_dir, weight=True)
+
+    
 def train_one_model(client_id):
     check_and_build_dir("../models/train")
     sub_model_path = f"../models/train/{client_id}.pkl"
@@ -167,8 +174,9 @@ def train_one_model_roundly(client_id, rounds):
 
 
 if __name__ == '__main__':
+    initialize_model()
     # test_federated()
-    train_one_model(1)
+    # train_one_model(1)
     # test_one_model()
     # test_federated_model(10)
 

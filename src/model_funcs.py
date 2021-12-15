@@ -10,6 +10,9 @@ import torch.nn.functional as F
 from torch import optim
 
 
+def initialize_global_model():
+    global_model_path = glo.get_global_var("global_model_path")
+
 def train_one_model(dataset):
     startTime = time.time()
 
