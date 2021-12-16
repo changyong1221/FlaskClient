@@ -105,33 +105,34 @@ def merge_models_and_test(dataset):
 def update_model(dataset):
     global_model_path = glo.get_global_var("global_model_path")
     sub_model_path = glo.get_global_var("sub_model_path")
-    client_id = glo.get_global_var("client_id")
-    x_test, y_test = dataset.get_test_dataset()
-
-    # get test score of sub_model
-    client_model = FedClient(net=Mnist_2NN(), ID=client_id)
-    client_model.load_model(sub_model_path, weight=True)
-    client_acc = client_model.evaluate(x_test, y_test, batch_size=64)
-    sub_model_score = client_acc * 1000
-
-    # get test score of global_model
-    global_model = FedServer(net=Mnist_2NN())
-    global_model.load_model(global_model_path, weight=True)
-    global_acc = global_model.evaluate(x_test, y_test, batch_size=64)
-    global_model_score = global_acc * 1000
-
-    print_log(f"sub_model_score: {sub_model_score}")
-    print_log(f"global_model_score: {global_model_score}")
-    if global_model_score > sub_model_score:
-        print_log("global model is better.")
-        print_log("updating local model...")
-        if os.path.exists(global_model_path):
-            shutil.copyfile(global_model_path, sub_model_path)
-        print_log("local model updated.")
-    else:
-        print_log("local model is better.")
-        os.remove(global_model_path)
-        print_log("global model dropped.")
+    shutil.copyfile(global_model_path, sub_model_path)
+    # client_id = glo.get_global_var("client_id")
+    # x_test, y_test = dataset.get_test_dataset()
+    #
+    # # get test score of sub_model
+    # client_model = FedClient(net=Mnist_2NN(), ID=client_id)
+    # client_model.load_model(sub_model_path, weight=True)
+    # client_acc = client_model.evaluate(x_test, y_test, batch_size=64)
+    # sub_model_score = client_acc * 1000
+    #
+    # # get test score of global_model
+    # global_model = FedServer(net=Mnist_2NN())
+    # global_model.load_model(global_model_path, weight=True)
+    # global_acc = global_model.evaluate(x_test, y_test, batch_size=64)
+    # global_model_score = global_acc * 1000
+    #
+    # print_log(f"sub_model_score: {sub_model_score}")
+    # print_log(f"global_model_score: {global_model_score}")
+    # if global_model_score > sub_model_score:
+    #     print_log("global model is better.")
+    #     print_log("updating local model...")
+    #     if os.path.exists(global_model_path):
+    #         shutil.copyfile(global_model_path, sub_model_path)
+    #     print_log("local model updated.")
+    # else:
+    #     print_log("local model is better.")
+    #     os.remove(global_model_path)
+    #     print_log("global model dropped.")
     print_log("update process finished.")
 
 
