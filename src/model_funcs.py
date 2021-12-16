@@ -12,6 +12,28 @@ from torch import optim
 
 def initialize_global_model():
     global_model_path = glo.get_global_var("global_model_path")
+    initial_model_path = "initial_model/global_model.pkl"
+    shutil.copyfile(initial_model_path, global_model_path)
+
+
+def preheat_for_first_round(dataset):
+    client_id = glo.get_global_var("client_id")
+
+    # training settings
+    epoch = 10
+    batch_size = 64
+    learning_rate = 0.01
+
+    x_test, y_test = dataset.get_test_dataset()
+    x_train, y_train = dataset.get_train_batch(client_id, batch_size * 10)
+
+    model = FedClient(net=Mnist_2NN(), ID=client_id)
+    model.setJob(jobAdress="x3tg83jx0m4jf8chyp5djas4jf9")
+    model.set_model_settings(loss_func=F.cross_entropy, optimizer=optim.SGD(model.net.parameters(), lr=learning_rate))
+    loss = model.train(x_train, y_train, epoch, batch_size)
+    acc = model.evaluate(x_test, y_test, batch_size)
+    print_log("preheat finished.")
+
 
 def train_one_model(dataset):
     startTime = time.time()

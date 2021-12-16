@@ -2,7 +2,7 @@ import src.globals as glo
 glo.__init()
 
 from flask import Flask, render_template, request, Response
-from src.model_funcs import train_one_model, merge_models_and_test, has_submodel, update_model
+from src.model_funcs import train_one_model, merge_models_and_test, update_model, initialize_global_model, preheat_for_first_round
 from src.log import print_log
 from src.get_data import DataSet
 from src.ipfs_api import upload_to_ipfs, download_from_ipfs
@@ -193,12 +193,6 @@ def get_host_ip():
     finally:
         s.close()
     return ip
-    
-    
-def initialize_global_model():
-    global_model_path = glo.get_global_var("global_model_path")
-    initial_model_path = "initial_model/global_model.pkl"
-    shutil.copyfile(initial_model_path, global_model_path)
 
 
 if __name__ == '__main__':
@@ -249,6 +243,7 @@ if __name__ == '__main__':
     is_iid = False
     dataset = DataSet(clients_num, is_iid)
     initialize_global_model()
+    preheat_for_first_round(dataset)
 
     app.run(host=local_host, port=args.port)
 
