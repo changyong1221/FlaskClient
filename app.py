@@ -240,8 +240,7 @@ if __name__ == '__main__':
             shutil.rmtree(path)
         os.makedirs(path)
 
-    is_iid = False
-    dataset = DataSet(clients_num, is_iid)
+    dataset = DataSet(clients_num)
     initialize_global_model()
     preheat_for_first_round(dataset)
 
