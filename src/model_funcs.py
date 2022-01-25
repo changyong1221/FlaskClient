@@ -17,10 +17,10 @@ def preheat_for_first_round(dataset):
     client_id = glo.get_global_var("client_id")
 
     # training settings
-    epoch = 10
+    epoch = 1
 
     x_test, y_test = dataset.get_test_dataset()
-    client_dataset = dataset.get_train_batch(client_id)
+    client_dataset = dataset.get_train_batch(client_id - 1)
 
     model = FedClient()
     loss = model.train(client_dataset, epoch)
@@ -39,16 +39,22 @@ def train_one_model(dataset):
     client_id = glo.get_global_var("client_id")
 
     x_test, y_test = dataset.get_test_dataset()
-    client_dataset = dataset.get_train_batch(client_id)
+    client_dataset = dataset.get_train_batch(client_id - 1)
 
     model = FedClient()
+    print_log("start load global model...")
     if os.path.exists(global_model_path):
         model.load_model(global_model_path)
+    print_log("global model loaded.")
+    print_log("client model training...")
     loss = model.train(client_dataset, epoch)
+    print_log("client model training finished.")
+    print_log("client model evaluating...")
     acc = model.evaluate(x_test, y_test)
-
+    print_log("client model evaluating finished.")
+    print_log("client model saving...")
     model.save_model(sub_model_path)
-    model.upload()
+    print_log("client model saved.")
 
     save_results(round(loss, 4), "LOSS", is_global=False)
     save_results(round(acc, 4), "ACC", is_global=False)

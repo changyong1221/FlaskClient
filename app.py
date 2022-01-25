@@ -13,10 +13,14 @@ import argparse
 import socket
 from multiprocessing import Process
 import shutil
+import torch
 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abcdefg'
+
+import warnings
+warnings.filterwarnings("ignore")
 
 @app.route("/")
 def root():
@@ -206,8 +210,9 @@ if __name__ == '__main__':
     # app.run(debug=True, host=local_host, port=local_port)
 
     # Attention: some parameters should be set in the following before first run
-    local_host = get_host_ip()
+    # local_host = get_host_ip()
     # local_port = 4001
+    local_host = "127.0.0.1"
     local_port = args.port
     client_id = args.id
     # client_id = 2

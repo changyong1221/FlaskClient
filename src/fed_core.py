@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from tensorflow_privacy.privacy.analysis.compute_noise_from_budget_lib import compute_noise
-from src_torch_distributed.net_core import MnistCNN
+from src.net_core import MnistCNN
 import torch.nn.functional as F
 from torch import optim
 import copy
@@ -19,13 +19,13 @@ class FedClient(nn.Module):
         super(FedClient, self).__init__()
         self.model = MnistCNN().to(dev)
         self.learning_rate = 0.01
-        self.clip = 12      # 裁剪系数
-        self.q = 0.05
-        self.eps = 16
-        self.delta = 1e-4
-        self.tot_T = 10
-        self.E = 100
-        self.batch_size = 64
+        self.clip = 32      # 裁剪系数
+        self.q = 0.03
+        self.eps = 16.0
+        self.delta = 1e-5
+        self.tot_T = 150
+        self.E = 1
+        self.batch_size = 128
         self.sigma = compute_noise(1, self.q, self.eps, self.E*self.tot_T, self.delta, 1e-5)      # 高斯分布系数
         # self.sigma = 24.831
 
