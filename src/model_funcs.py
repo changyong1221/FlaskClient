@@ -49,12 +49,12 @@ def train_one_model(dataset):
     print_log("client model training...")
     loss = model.train(client_dataset, epoch)
     print_log("client model training finished.")
-    print_log("client model evaluating...")
-    acc = model.evaluate(x_test, y_test)
-    print_log("client model evaluating finished.")
     print_log("client model saving...")
     model.save_model(sub_model_path)
     print_log("client model saved.")
+    print_log("client model evaluating...")
+    acc = model.evaluate(x_test, y_test)
+    print_log("client model evaluating finished.")
 
     save_results(round(loss, 4), "LOSS", is_global=False)
     save_results(round(acc, 4), "ACC", is_global=False)
@@ -87,6 +87,17 @@ def merge_models_and_test(dataset):
         print_log(f'models/downloads/client-{client_id}/{merge_idx}.pkl')
         models_path_list.append(f'models/downloads/client-{client_id}/{merge_idx}.pkl')
 
+    # merge global model and test
+    global_model = FedServer()
+    print_log("global model loaded.")
+    print_log("start doing weights average...")
+    global_model.fed_avg(models_path_list)
+    print_log("weights average done.")
+    global_model.save_model(global_model_path)
+    print_log("start evaluating global model...")
+    global_acc = global_model.evaluate(x_test, y_test)
+    print_log(f'global_model_acc: {global_acc}')
+
     # get test scores of submodels
     client_acc_list = []
     client_score_list = []
@@ -98,17 +109,6 @@ def merge_models_and_test(dataset):
         client_score_list.append(int(acc*1000))
         print_log(f'client({merge_clients_id_list[i]})_model_acc: {acc}')
 
-    # merge global model and test
-    global_model = FedServer()
-    print_log("global model loaded.")
-    print_log("start doing weights average...")
-    global_model.fed_avg(models_path_list)
-    print_log("weights average done.")
-    print_log("start evaluating global model...")
-    global_acc = global_model.evaluate(x_test, y_test)
-    print_log(f'global_model_acc: {global_acc}')
-
-    global_model.save_model(global_model_path)
     global_model_score = global_acc * 1000
     save_results(round(global_acc, 4), "ACC", is_global=True)
     retSet = {"clients_scores": client_score_list, "global_score": int(global_model_score)}

@@ -23,11 +23,12 @@ class FedClient(nn.Module):
         self.q = 0.03
         self.eps = 16.0
         self.delta = 1e-5
-        self.tot_T = 150
+        self.tot_T = 100
         self.E = 1
         self.batch_size = 128
-        self.sigma = compute_noise(1, self.q, self.eps, self.E*self.tot_T, self.delta, 1e-5)      # 高斯分布系数
+        # self.sigma = compute_noise(1, self.q, self.eps, self.E*self.tot_T, self.delta, 1e-5)      # 高斯分布系数
         # self.sigma = 24.831
+        self.sigma = 0.9054
 
     def train(self, client_dataset, epoches):
         loss_func = F.cross_entropy
