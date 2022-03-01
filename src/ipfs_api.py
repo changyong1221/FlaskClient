@@ -67,10 +67,10 @@ def download_from_ipfs(client_id, is_global, cid):
 if __name__ == '__main__':
     pass
     # upload file
-    # client_id = 1
-    # data_path = "../models/train/test.txt"
-    # cid = upload_to_ipfs(client_id, False, data_path)
-    # print(cid)
+    client_id = 1
+    data_path = "../initial_model/global_model.pkl"
+    cid = upload_to_ipfs(client_id, True, data_path)
+    print(cid)
 
     # download file
     # cid = "QmaRXcHprtJeapFQiqLiqz4XWZAUxC86dUK6dwgYqLmCq1"

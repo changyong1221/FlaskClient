@@ -1,7 +1,7 @@
 from random import random
-from src.get_data import DataSet
-from src.fed_core import FedClient, FedServer
-from src.utils import *
+from get_data import DataSet
+from fed_core import FedClient, FedServer
+from utils import *
 import numpy as np
 import time
 import shutil
