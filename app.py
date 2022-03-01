@@ -45,8 +45,8 @@ def submit_submodel():
         return json.dumps({"status": "updating"})
     if glo.get_global_var("merge_status") is not "todo":
         return json.dumps({"status": "merging"})
-    money = request.json["money"]
-    print_log(f"money: {money}")
+    # money = request.json["money"]
+    # print_log(f"money: {money}")
     if glo.get_global_var("train_status") == "todo":
         executor.submit(train_working)
         return json.dumps({"status": "start training"})
@@ -59,7 +59,9 @@ def submit_submodel():
         print_log("cid returned.")
         glo.set_global_var("train_status", "todo")
         return job
-
+@app.route("/infoPledge", methods=['POST'])
+def pledge():
+    return {"is_need_join":True}
 
 def train_working():
     print_log("start training...")
