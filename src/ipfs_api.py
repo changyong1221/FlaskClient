@@ -65,14 +65,14 @@ def download_from_ipfs(client_id, is_global, cid):
 
 
 if __name__ == '__main__':
-    pass
+    # pass
     # upload file
-    client_id = 1
-    data_path = "../initial_model/global_model.pkl"
-    cid = upload_to_ipfs(client_id, True, data_path)
-    print(cid)
+    # client_id = 1
+    # data_path = "../initial_model/global_model.pkl"
+    # cid = upload_to_ipfs(client_id, True, data_path)
+    # print(cid)
 
     # download file
-    # cid = "QmaRXcHprtJeapFQiqLiqz4XWZAUxC86dUK6dwgYqLmCq1"
-    # merge_client_id = download_from_ipfs(1, False, cid)
-    # print(merge_client_id)
+    cid = "QmR2EoCjd9Vrhps2aSH8xzq9iPjBY4JDGTADtB94Y6jdB4"
+    merge_client_id = download_from_ipfs(1, False, cid)
+    print(merge_client_id)

@@ -26,10 +26,11 @@ def train_one_model(client_id):
     if os.path.exists(global_model_path):
         model.load_model(global_model_path)
     loss = model.train(client_dataset, epoch)
-    # acc = model.evaluate(x_test, y_test, batch_size)
     acc = 0
 
     model.save_model(sub_model_path)
+    acc = model.evaluate(x_test, y_test)
+
     # print(f"Client-ID:{client_id}, loss:{loss}, acc:{acc}")
     # print("training done.")
     return loss, acc
@@ -48,12 +49,12 @@ def test_federated_model():
     sub_model_acc = []
     for i in range(clients_num):
         path = f"../models/train/{i}.pkl"
-        # client_model = FedClient(net=Mnist_2NN(), ID=client_id)
-        # client_model.load_model(path, weight=True)
-        # acc = client_model.evaluate(x_test, y_test, batch_size)
-        # sub_model_acc.append(acc)
+        client_model = FedClient()
+        client_model.load_model(path)
+        acc = client_model.evaluate(x_test, y_test)
+        sub_model_acc.append(acc)
         sub_model_paths.append(path)
-    # print(f"mean of sub_model_acc: {np.mean(sub_model_acc)}")
+    print(f"mean of sub_model_acc: {np.mean(sub_model_acc)}")
 
     global_model = FedServer()
     global_model.fed_avg(sub_model_paths)
