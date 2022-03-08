@@ -13,6 +13,13 @@ import copy
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 dev = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+q = 0.03
+eps = 1.0
+delta = 1e-5
+tot_T = 100
+E = 1
+sigma = compute_noise(1, q, eps, E*tot_T, delta, 1e-5)      # 高斯分布系数
+
 
 class FedClient(nn.Module):
     def __init__(self):
@@ -20,15 +27,18 @@ class FedClient(nn.Module):
         self.model = MnistCNN().to(dev)
         self.learning_rate = 0.01
         self.clip = 32      # 裁剪系数
-        self.q = 0.03
-        self.eps = 16.0
-        self.delta = 1e-5
-        self.tot_T = 100
-        self.E = 1
+        self.q = q
+        self.eps = eps
+        self.delta = delta
+        self.tot_T = tot_T
+        self.E = E
         self.batch_size = 128
+        self.sigma = sigma
         # self.sigma = compute_noise(1, self.q, self.eps, self.E*self.tot_T, self.delta, 1e-5)      # 高斯分布系数
+        # print("sigma: ", self.sigma)
         # self.sigma = 24.831
-        self.sigma = 0.9054
+        # self.sigma = 0.9054   # eps = 16.0
+        # self.sigma = 1.3215592  # eps = 8.0
 
     def train(self, client_dataset, epoches):
         loss_func = F.cross_entropy
