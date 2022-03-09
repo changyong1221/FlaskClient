@@ -102,11 +102,11 @@ class FedClient(nn.Module):
         acc = correct / tot_sample
         return acc
 
-    def load_model(self, file_path):
-        self.model.load_state_dict(torch.load(file_path), strict=True)
-
-    def save_model(self, save_path):
-        torch.save(self.model.state_dict(), save_path)
+    # def load_model(self, file_path):
+    #     self.model.load_state_dict(torch.load(file_path), strict=True)
+    #
+    # def save_model(self, save_path):
+    #     torch.save(self.model.state_dict(), save_path)
 
 
 class FedServer(nn.Module):

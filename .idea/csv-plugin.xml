@@ -73,6 +73,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\src_scheduling\model_funcs.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

@@ -1,11 +1,11 @@
-import src_scheduling.globals as glo
+import src.globals as glo
 glo.__init()
 
 from flask import Flask, render_template, request, Response
-from src_scheduling.model_funcs import train_one_model, merge_models_and_test, update_model, initialize_global_model, preheat_for_first_round
-from src_scheduling.log import print_log
-from src_scheduling.get_data import DataSet
-from src_scheduling.ipfs_api import upload_to_ipfs, download_from_ipfs
+from src.model_funcs import train_one_model, merge_models_and_test, update_model, initialize_global_model, preheat_for_first_round
+from src.log import print_log
+from src.get_data import DataSet
+from src.ipfs_api import upload_to_ipfs, download_from_ipfs
 import os
 import json
 from concurrent.futures import ThreadPoolExecutor
@@ -35,7 +35,7 @@ def train():
     if glo.get_global_var("train_status") == "training":
         return json.dumps({"status": "training"})
     else:
-        executor.submit(train_one_model)
+        executor.submit(train_one_model, (dataset))
         return json.dumps({"status": "start training..."})
 
 
@@ -59,17 +59,14 @@ def submit_submodel():
         print_log("cid returned.")
         glo.set_global_var("train_status", "todo")
         return job
-
-
 @app.route("/infoPledge", methods=['POST'])
 def pledge():
     return {"is_need_join":True}
 
-
 def train_working():
     print_log("start training...")
     glo.set_global_var("train_status", "training")
-    train_one_model()
+    train_one_model(dataset)
     print_log("train finished.")
     submodel_path = glo.get_global_var("sub_model_path")
     client_id = glo.get_global_var("client_id")
@@ -124,7 +121,7 @@ def merge_models_work(model_ids):
     # merge models. merge process won't start before all submodels have been downloaded
     print_log("submodels downloading finished.")
     print_log("merge start.")
-    scores = merge_models_and_test()
+    scores = merge_models_and_test(dataset)
     print_log("merge finished.")
 
     # upload global model
@@ -170,7 +167,7 @@ def download_and_update_global_model(paras):
     client_id = glo.get_global_var("client_id")
     global_id_tmp = download_from_ipfs(client_id, True, cid)
     print_log("global model downloaded.")
-    update_model()
+    update_model(dataset)
     glo.set_global_var("update_status", "todo")
 
 
@@ -250,9 +247,9 @@ if __name__ == '__main__':
             shutil.rmtree(path)
         os.makedirs(path)
 
-    # dataset = DataSet(client_id)
+    dataset = DataSet(clients_num)
     initialize_global_model()
-    # preheat_for_first_round(dataset)
+    preheat_for_first_round(dataset)
 
     app.run(host=local_host, port=args.port)
 
