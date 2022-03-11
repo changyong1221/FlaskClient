@@ -73,6 +73,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\src_scheduling\fed_core.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\src_scheduling\ipfs_api.py">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\src_scheduling\model_funcs.py">
           <value>
             <Attribute>

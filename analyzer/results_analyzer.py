@@ -13,9 +13,9 @@ def compute_client_avg_task_process_time(client_id, is_test=False):
     """
     scheduler_name = glo.get_global_var("current_scheduler")
     if is_test:
-        data_path = f"results/task_run_results/test/client-{client_id}/{scheduler_name}/{glo.get_global_var('current_round')}"
+        data_path = f"results/task_run_results/test/client-{client_id}/{scheduler_name}/{glo.get_global_var('current_round')}/{scheduler_name}_task_run_results.txt"
     else:
-        data_path = f"results/task_run_results/train/client-{client_id}/{scheduler_name}/{glo.get_global_var('current_round')}"
+        data_path = f"results/task_run_results/train/client-{client_id}/{scheduler_name}/{glo.get_global_var('current_round')}/{scheduler_name}_task_run_results.txt"
     data = pd.read_csv(data_path, header=None, delimiter='\t')
     data.columns = ['task_id', 'task_mi', 'machine_id', 'machine_mips', 'transfer_time', 'wait_time',
                     'execute_time', 'process_time']

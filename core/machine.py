@@ -28,7 +28,7 @@ class Machine(object):
         """Add task run instance to task_waiting_queue
         """
         self.task_waiting_queue.append(task)
-        print_log(f"task({task.task_id}) ---> machine({self.machine_id})")
+        # print_log(f"task({task.task_id}) ---> machine({self.machine_id})")
 
     def execute_tasks(self, multidomain_id):
         """Execute tasks in the task_waiting_queue
@@ -41,7 +41,7 @@ class Machine(object):
             self.realtime_cpu_utilization = task.get_task_cpu_utilization()
             self.realtime_memory_utilization = round(task.get_task_size() / self.memory, 4)
             self.realtime_bandwidth_utilization = 1
-            scheduler_name = glo.get_global_var("current_scheduer")
+            scheduler_name = glo.get_global_var("current_scheduler")
             output_dir = f"results/machine_status_results/train/client-{multidomain_id}/{scheduler_name}/{glo.get_global_var('current_round')}"
             check_and_build_dir(output_dir)
             output_path = output_dir + f"/{self.machine_id}_status.txt"

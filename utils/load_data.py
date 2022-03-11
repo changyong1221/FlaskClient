@@ -87,7 +87,7 @@ def sample_task_batches_from_file(file_path, batch_num=1, delimiter='\t'):
         f.close()
     if batch_num == len(task_batches):
         return task_batches
-    print(len(task_batches))
+    # print(len(task_batches))
     task_batches_start_idx = np.random.randint(0, len(task_batches) - batch_num)
     ret = task_batches[task_batches_start_idx:task_batches_start_idx+batch_num]
     return ret

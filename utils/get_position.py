@@ -1,15 +1,15 @@
 import requests
 from math import radians, cos, sin, asin, sqrt
-import globals.global_var as glo
+import globals.global_var as glo_file
 
 
 def get_position_by_name(address):
     """Get longitude and lattitude of a city by baidu api
     """
     # search global var first
-    if glo.geographical_location_list.get(address) is not None:
-        lon = glo.geographical_location_list[address][0]
-        lat = glo.geographical_location_list[address][1]
+    if glo_file.geographical_location_list.get(address) is not None:
+        lon = glo_file.geographical_location_list[address][0]
+        lat = glo_file.geographical_location_list[address][1]
         return lon, lat
 
     url = f'http://api.map.baidu.com/geocoder?output=json&key=f247cdb592eb43ebac6ccd27f796e2d2&address={address}&' \

@@ -22,7 +22,7 @@ def initialize_global_model():
     machine_num = 20
     scheduler = DQNScheduler(multidomain_id=1, machine_num=machine_num, task_batch_num=1,
                              machine_kind_num_list=[], machine_kind_idx_range_list=[],
-                             is_federated=False)
+                             )
     global_model_path = glo.get_global_var("global_model_path")
     scheduler.DRL.save_initial_model(global_model_path)
 
@@ -83,20 +83,29 @@ def merge_models_and_test():
     global_model_path = glo.get_global_var("global_model_path")
     glo.set_global_var("is_federated_test", True)
 
+    round_list = glo.get_global_var("clients_merge_rounds_list")
     models_path_list = []
     for merge_idx in merge_clients_id_list:
         print_log(f'models/downloads/client-{client_id}/{merge_idx}.pkl')
         models_path_list.append(f'models/downloads/client-{client_id}/{merge_idx}.pkl')
+        round_list[merge_idx] += 1
+
+
+    # models_path_list = [f"models/downloads/client-{client_id}/1.pkl",
+    #                    f"models/downloads/client-{client_id}/2.pkl"]
+    # set merge rounds list
+    glo.set_global_var("clients_merge_rounds_list", round_list)
 
     # merge global model and test
     global_model = FedServer()
     print_log("global model loaded.")
     print_log("start doing weights average...")
-    global_model.fed_avg(models_path_list)
+    global_model.fed_avg(models_path_list, merge_clients_id_list)
     print_log("weights average done.")
     print_log("start evaluating global model...")
     global_processing_time = global_model.evaluate()
     print_log(f'global_processing_time: {global_processing_time}')
+    save_results(global_processing_time, "TIME", True)
 
     # get test scores of submodels
     client_acc_list = []
@@ -109,7 +118,6 @@ def merge_models_and_test():
         print_log(f'client({merge_idx})_model_processing_time: {client_processing_time}')
 
     global_model_score = global_processing_time
-    save_results(round(global_processing_time, 2), "ACC", is_global=True)
     retSet = {"clients_scores": client_score_list, "global_score": int(global_model_score)}
     print_log(retSet)
     glo.set_global_var("is_federated_test", False)

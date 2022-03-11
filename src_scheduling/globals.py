@@ -22,6 +22,10 @@ def __init():
     _global_dict["job_info_path"] = ""
     _global_dict["current_scheduler"] = "DQNScheduler"
     _global_dict["current_round"] = 0
+    _global_dict["all_rounds"] = 0
+    _global_dict["clients_merge_rounds_list"] = []
+    _global_dict["current_data_scale"] = 0
+    _global_dict["clients_data_scale_list"] = []
     _global_dict["is_federated_test"] = False
 
 

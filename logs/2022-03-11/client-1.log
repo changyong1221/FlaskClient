@@ -1,0 +1,68 @@
+[client-1 19:38:41]: start load global model...
+[client-1 19:38:41]: global model loaded.
+[client-1 19:38:41]: DQN网络初始化成功！
+[client-1 19:38:48]: start training...
+[client-1 19:38:48]: client model training...
+[client-1 19:38:48]: --------------------------------------------------------
+[client-1 19:38:48]: |                                                      |
+[client-1 19:38:48]: |       Cross-domain task scheduling system v1.0       |
+[client-1 19:38:48]: |                                                      |
+[client-1 19:38:48]: --------------------------------------------------------
+[client-1 19:38:48]: multi-domain scheduling system is created.
+[client-1 19:38:48]: domain(0) is created.
+[client-1 19:38:48]: domain(1) is created.
+[client-1 19:38:48]: domain(2) is created.
+[client-1 19:38:48]: domain(3) is created.
+[client-1 19:38:48]: domain(4) is created.
+[client-1 19:38:48]: machine(0) is added to domain(0)
+[client-1 19:38:48]: machine(1) is added to domain(0)
+[client-1 19:38:48]: machine(2) is added to domain(0)
+[client-1 19:38:48]: machine(3) is added to domain(0)
+[client-1 19:38:48]: machine(4) is added to domain(1)
+[client-1 19:38:48]: machine(5) is added to domain(1)
+[client-1 19:38:48]: machine(6) is added to domain(1)
+[client-1 19:38:48]: machine(7) is added to domain(1)
+[client-1 19:38:48]: machine(8) is added to domain(2)
+[client-1 19:38:48]: machine(9) is added to domain(2)
+[client-1 19:38:48]: machine(10) is added to domain(2)
+[client-1 19:38:48]: machine(11) is added to domain(2)
+[client-1 19:38:48]: machine(12) is added to domain(3)
+[client-1 19:38:48]: machine(13) is added to domain(3)
+[client-1 19:38:48]: machine(14) is added to domain(3)
+[client-1 19:38:48]: machine(15) is added to domain(3)
+[client-1 19:38:48]: machine(16) is added to domain(4)
+[client-1 19:38:48]: machine(17) is added to domain(4)
+[client-1 19:38:48]: machine(18) is added to domain(4)
+[client-1 19:38:48]: machine(19) is added to domain(4)
+[client-1 19:38:48]: domain(0) is add to multi-domain scheduling system.
+[client-1 19:38:48]: domain(1) is add to multi-domain scheduling system.
+[client-1 19:38:48]: domain(2) is add to multi-domain scheduling system.
+[client-1 19:38:48]: domain(3) is add to multi-domain scheduling system.
+[client-1 19:38:48]: domain(4) is add to multi-domain scheduling system.
+[client-1 19:38:49]: train_tasks_num: 33
+[client-1 19:38:49]: train_tasks_accu: 33
+[client-1 19:38:49]: training batches number: 5
+[client-1 19:38:49]: start load global model...
+[client-1 19:38:49]: global model loaded.
+[client-1 19:38:49]: DQN网络初始化成功！
+[client-1 19:38:49]: DQNScheduler task scheduler is set for multi-domain scheduling system.
+[client-1 19:38:49]: committed tasks is running...
+[client-1 19:38:49]: cur_step: 0
+[client-1 19:38:49]: committed tasks is running...
+[client-1 19:38:49]: cur_step: 1
+[client-1 19:38:49]: committed tasks is running...
+[client-1 19:38:49]: cur_step: 2
+[client-1 19:38:49]: committed tasks is running...
+[client-1 19:38:49]: cur_step: 3
+[client-1 19:38:49]: step: 3, loss: 34929528.0
+[client-1 19:38:49]: committed tasks is running...
+[client-1 19:38:49]: cur_step: 4
+[client-1 19:38:49]: parameters of evaluate net have been saved.
+[client-1 19:38:49]: step: 4, loss: 37009332.0
+[client-1 19:38:49]: return to reset
+[client-1 19:38:49]: multi-domain scheduling system is reset.
+[client-1 19:38:49]: client model training finished.
+[client-1 19:38:49]: Client-ID:1, Time:0.8941872119903564
+[client-1 19:38:49]: training done.
+[client-1 19:38:49]: train finished.
+[client-1 19:38:49]: wrapper current_data_scale: 33

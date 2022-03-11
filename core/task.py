@@ -3,6 +3,7 @@ from utils.get_position import compute_distance_by_location
 from utils.file_check import check_and_build_dir
 from src_scheduling.log import print_log
 import src_scheduling.globals as glo
+import globals.global_var as glo_file
 
 
 class Task(object):
@@ -55,8 +56,8 @@ class TaskRunInstance(Task):
         """
         line_transmit_time = compute_distance_by_location(machine.longitude,
                                                           machine.latitude,
-                                                          glo.location_longitude,
-                                                          glo.location_latitude) / glo.line_transmit_speed
+                                                          glo_file.location_longitude,
+                                                          glo_file.location_latitude) / glo_file.line_transmit_speed
         # print_log(f"line_transmit_time: {line_transmit_time} s")
         self.task_transfer_time = round(self.size / machine.get_bandwidth() + line_transmit_time, 4)
         self.task_waiting_time = round(max(0, machine.get_finish_time() - self.commit_time), 4)
@@ -66,7 +67,7 @@ class TaskRunInstance(Task):
         machine.set_finish_time(self.commit_time + self.task_processing_time)
         self.is_done = True
 
-        scheduler_name = glo.get_global_var("current_scheduer")
+        scheduler_name = glo.get_global_var("current_scheduler")
         output_dir = f"results/task_run_results/train/client-{multidomain_id}/{scheduler_name}/{glo.get_global_var('current_round')}"
         check_and_build_dir(output_dir)
         output_path = output_dir + f"/{scheduler_name}_task_run_results.txt"

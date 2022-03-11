@@ -8,7 +8,7 @@ from src_scheduling.log import print_log
 
 class DQNScheduler(Scheduler):
     def __init__(self, multidomain_id, machine_num, task_batch_num, machine_kind_num_list, machine_kind_idx_range_list,
-                 balance_prob):
+                 balance_prob=0.5):
         """Initialization
 
         input : a list of tasks
@@ -73,13 +73,11 @@ class DQNScheduler(Scheduler):
             # print("task_processing_time: ", task.get_task_processing_time())
             # print("reward: ", reward)
             self.reward_all.append([reward])  # 计算奖励
-
         # 减少存储数据量
         if len(self.state_all) > 20000:
             self.state_all = self.state_all[-10000:]
             self.action_all = self.action_all[-10000:]
             self.reward_all = self.reward_all[-10000:]
-
         # 如果使用prioritized memory
         if self.prioritized_memory:
             for i in range(len(task_instance_batch)):
@@ -87,7 +85,7 @@ class DQNScheduler(Scheduler):
                                   [self.reward_all[-1 + i]], [self.state_all[-1 + i]])
 
         # 先学习一些经验，再学习
-        print("cur_step: ", self.cur_step)
+        print_log(f"cur_step: {self.cur_step}")
         if self.cur_step > 2:
             # 截取最后10000条记录
             # print_log(type(self.state_all))

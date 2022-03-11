@@ -3,11 +3,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
-from src_scheduling.net_core import MnistCNN
 import torch.nn.functional as F
 from torch import optim
 import copy
-
+from src_scheduling.log import print_log
 import math
 from core.domain import create_domains, create_multi_domain
 from scheduler.RoundRobinScheduler import RoundRobinScheduler
@@ -66,9 +65,20 @@ class FedClient(nn.Module):
         task_file_path = f"dataset/Alibaba/client/Alibaba-Cluster-trace-100000-client-{client_id}.txt"
         task_batch_list = sample_task_batches_from_file(task_file_path, batch_num=n_batches, delimiter='\t')
 
+        # compute tasks num in batches
+        train_tasks_num = 0
+        for batch in task_batch_list:
+            train_tasks_num += len(batch)
+        print_log(f"train_tasks_num: {train_tasks_num}")
+        train_tasks_accu = glo.get_global_var("current_data_scale")
+        train_tasks_accu += train_tasks_num
+        glo.set_global_var("current_data_scale", train_tasks_accu)
+        print_log(f"train_tasks_accu: {train_tasks_accu}")
+
         # 7. set scheduler for multi-domain system
         machine_num = len(machine_list)
         task_batch_num = len(task_batch_list)
+        print_log(f"training batches number: {task_batch_num}")
         # scheduler = RoundRobinScheduler(machine_num)
         machine_kind_num_list, machine_kind_idx_range_list = get_machine_kind_list(machine_list)
 
@@ -90,7 +100,7 @@ class FedClient(nn.Module):
         # 8. commit tasks to multi-domain system, training
         for batch in task_batch_list:
             multi_domain.commit_tasks(batch)
-
+        print_log("return to reset")
         # 9. reset multi-domain system
         multi_domain.reset()
 
@@ -107,7 +117,7 @@ class FedClient(nn.Module):
         domain_list = create_domains(location_list)
 
         # 3. add machines to domain
-        machine_file_path = glo.machine_file_path
+        machine_file_path = "dataset/machine/machine.txt"
         machine_list = load_machines_from_file(machine_file_path)
         machine_num_per = len(machine_list) // domain_num
         for domain_id in range(domain_num):
@@ -154,7 +164,6 @@ class FedClient(nn.Module):
         multi_domain.set_scheduler(scheduler)
 
         # 8. commit tasks to multi-domain system, training
-        glo.is_test = True
         for batch in tasks_for_test:
             multi_domain.commit_tasks(batch)
         # multi_domain.commit_tasks(tasks_for_test)
@@ -177,25 +186,39 @@ class FedServer(nn.Module):
     def __init__(self):
         super(FedServer, self).__init__()
 
-    def fed_avg(self, model_path_list):
+    def fed_avg(self, model_path_list, merge_clients_id_list):
         # FL average
-        # load client weights
+        # load client weights and do weights processing
         clients_weights_sum = None
         clients_num = len(model_path_list)
-        for model_path in model_path_list:
+        round_list = glo.get_global_var("clients_merge_rounds_list")
+        all_rounds = glo.get_global_var("current_round")
+        data_scale_list = glo.get_global_var("clients_data_scale_list")
+        all_data_scale = 0
+        for data in data_scale_list:
+            all_data_scale += data
+        for i, model_path in enumerate(model_path_list):
+            # compute weights
+            round_weight = round_list[i] / all_rounds
+            data_scale_weight = data_scale_list[i] / all_data_scale
+            print_log("round_weight: ", round_weight)
+            print_log("data_scale_weight: ", data_scale_weight)
+            weight = min(round_weight, data_scale_weight)
+            print_log("weight: ", weight)
+
             cur_parameters = torch.load(model_path)
             if clients_weights_sum is None:
                 clients_weights_sum = {}
                 for key, var in cur_parameters.items():
-                    clients_weights_sum[key] = var.clone()
+                    clients_weights_sum[key] = var.clone() * weight
             else:
                 for var in cur_parameters:
-                    clients_weights_sum[var] = clients_weights_sum[var] + cur_parameters[var]
+                    clients_weights_sum[var] = clients_weights_sum[var] + cur_parameters[var] * weight
 
         # fed_avg
         global_weights = {}
         for var in clients_weights_sum:
-            global_weights[var] = (clients_weights_sum[var] / clients_num)
+            global_weights[var] = clients_weights_sum[var]
         global_model_path = glo.get_global_var("global_model_path")
         torch.save(global_weights, global_model_path)
 
@@ -213,7 +236,7 @@ class FedServer(nn.Module):
         domain_list = create_domains(location_list)
 
         # 3. add machines to domain
-        machine_file_path = glo.machine_file_path
+        machine_file_path = "dataset/machine/machine.txt"
         machine_list = load_machines_from_file(machine_file_path)
         machine_num_per = len(machine_list) // domain_num
         for domain_id in range(domain_num):

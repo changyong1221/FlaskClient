@@ -3,7 +3,8 @@ from utils.get_position import get_position_by_name
 from src_scheduling.log import print_log
 from utils.write_file import write_list_to_file
 from utils.file_check import check_and_build_dir
-import globals.global_var as glo
+import globals.global_var as glo_file
+import src_scheduling.globals as glo
 
 
 class Domain(object):
@@ -222,22 +223,16 @@ class MultiDomain(object):
         makespan = round(makespan, 4)
         avg_worktime = round(worktime / len(self.machine_list), 4)
 
-        if glo.is_federated:
-            output_dir = f"results/task_run_results/federated/batch/client-{self.multidomain_id}/{glo.federated_round}"
+        output_dir = f"results/task_run_results/train/batch/client-{self.multidomain_id}/{glo.get_global_var('current_round')}"
+        check_and_build_dir(output_dir)
+        output_path = output_dir + "/task_batches_run_results.txt"
+        if glo.get_global_var("is_federated_test"):
+            output_dir = f"results/task_run_results/test/batch/client-{self.multidomain_id}/{glo.get_global_var('current_round')}"
             check_and_build_dir(output_dir)
-            output_path = output_dir + "/task_batches_run_results2.txt"
-            if glo.is_test:
-                output_dir = f"results/task_run_results/federated/batch/federated_test/{glo.federated_round}"
-                check_and_build_dir(output_dir)
-                output_path = output_dir + "/task_batches_run_results2.txt"
-            output_list = [batch_avg_task_processing_time, makespan, avg_worktime]
-            write_list_to_file(output_list, output_path, mode='a+')
-        else:
-            output_dir = f"results/task_run_results/{glo.current_dataset}{glo.records_num}/{glo.current_scheduler}/task_batches/"
-            check_and_build_dir(output_dir)
-            output_path = output_dir + "task_batches_run_results2.txt"
-            output_list = [batch_avg_task_processing_time, makespan, avg_worktime]
-            write_list_to_file(output_list, output_path, mode='a+')
+            output_path = output_dir + "/task_batches_run_results.txt"
+        output_list = [batch_avg_task_processing_time, makespan, avg_worktime]
+        write_list_to_file(output_list, output_path, mode='a+')
+
 
     def get_idle_machine_list(self, task_commit_time):
         """Get idle machines according to the commit tasks
@@ -284,6 +279,6 @@ def create_multi_domain(multidomain_id, location):
     """
     multi_domain = MultiDomain(multidomain_id, location)
     multi_domain.auto_locate()
-    glo.location_longitude = multi_domain.longitude
-    glo.location_latitude = multi_domain.latitude
+    glo_file.location_longitude = multi_domain.longitude
+    glo_file.location_latitude = multi_domain.latitude
     return multi_domain

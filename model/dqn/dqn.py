@@ -9,7 +9,6 @@ from tensorboardX import SummaryWriter
 
 from model.dqn.prioritized_memory import Memory
 from utils.file_check import check_and_build_dir
-from utils.log import print_log
 from utils.state_representation import balancing, get_machine_kind_idx, task_adapting
 import src_scheduling.globals as glo
 from tensorflow_privacy.privacy.analysis.compute_noise_from_budget_lib import compute_noise
@@ -314,18 +313,18 @@ class DQN(object):
             # 使用差分隐私
             # 将梯度初始化为零
             self.optimizer.zero_grad()
+
             # 反向传播求梯度
             clipped_grads = {name: torch.zeros_like(param) for name, param in self.eval_net.named_parameters()}
-            for i in range(loss.size()[0]):
-                loss[i].backward(retain_graph=True)
-                torch.nn.utils.clip_grad_norm_(self.eval_net.parameters(), max_norm=self.clip)
-                for name, param in self.eval_net.named_parameters():
-                    clipped_grads[name] += param.grad
-                self.eval_net.zero_grad()
-                # add gaussian noise
-            for name, param in self.model.named_parameters():
+            loss.backward(retain_graph=True)
+            torch.nn.utils.clip_grad_norm_(self.eval_net.parameters(), max_norm=self.clip)
+            for name, param in self.eval_net.named_parameters():
+                clipped_grads[name] += param.grad
+            self.eval_net.zero_grad()
+            # add gaussian noise
+            for name, param in self.eval_net.named_parameters():
                 clipped_grads[name] += torch.normal(0, self.sigma * self.clip, clipped_grads[name].shape)
-            for name, param in self.model.named_parameters():
+            for name, param in self.eval_net.named_parameters():
                 param.grad = clipped_grads[name]
             # 更新所有参数
             self.optimizer.step()

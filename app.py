@@ -6,6 +6,7 @@ from src_scheduling.model_funcs import train_one_model, merge_models_and_test, u
 from src_scheduling.log import print_log
 from src_scheduling.get_data import DataSet
 from src_scheduling.ipfs_api import upload_to_ipfs, download_from_ipfs
+from utils.load_data import load_task_batches_from_file
 import os
 import json
 from concurrent.futures import ThreadPoolExecutor
@@ -39,7 +40,7 @@ def train():
         return json.dumps({"status": "start training..."})
 
 
-@app.route("/infoSubmit", methods=['POST'])
+@app.route("/infoSubmit", methods=['GET'])
 def submit_submodel():
     if glo.get_global_var("update_status") is not "todo":
         return json.dumps({"status": "updating"})
@@ -85,18 +86,18 @@ def train_working():
     glo.set_global_var("train_status", "finished")
 
 
-@app.route("/infoWork", methods=['POST'])
+@app.route("/infoWork", methods=['GET'])
 def merge_models():
     if glo.get_global_var("update_status") is not "todo":
         return json.dumps({"status": "updating"})
     if glo.get_global_var("train_status") is not "todo":
         return json.dumps({"status": "training"})
     if glo.get_global_var("merge_status") == "todo":
-        model_ids = request.json["models"]
-        # model_ids = ["QmQs9BHpYyeNUSkfCBJAxccsCZ8uBh3MFxvtprUTadve66000000000000000000",
-        #              "QmTFLTt94Km1A5w2TXSBPBsKu46c64795tFURQGNk13tF7000000000000000000",
-        #              "QmP1iU7kZJ7ExJvsHX8ddkN4RjRMRhMShExDdjsfQPhqyH000000000000000000",
-        #              "QmeoNqpk4MuLY74CiARbGFcXNwv8T2PUMSkU34mU29rZaD000000000000000000"]
+        # model_ids = request.json["models"]
+        model_ids = ["QmQs9BHpYyeNUSkfCBJAxccsCZ8uBh3MFxvtprUTadve66000000000000000000",
+                     "QmTFLTt94Km1A5w2TXSBPBsKu46c64795tFURQGNk13tF7000000000000000000",
+                     "QmP1iU7kZJ7ExJvsHX8ddkN4RjRMRhMShExDdjsfQPhqyH000000000000000000",
+                     "QmeoNqpk4MuLY74CiARbGFcXNwv8T2PUMSkU34mU29rZaD000000000000000000"]
         executor.submit(merge_models_work, (model_ids))
         return json.dumps({"status": "request received, start merging"})
     elif glo.get_global_var("merge_status") == "merging":
@@ -116,10 +117,10 @@ def merge_models_work(model_ids):
     glo.set_global_var("merge_clients_num", len(model_ids))
     client_id = glo.get_global_var("client_id")
     # get all submodels from swarm
-    print_log("start downloading submodels.")
-    for cid in model_ids:
-        merge_client_id = download_from_ipfs(client_id, False, cid)
-        glo.get_global_var("merge_clients_id_list").append(merge_client_id)
+    # print_log("start downloading submodels.")
+    # for cid in model_ids:
+    #     merge_client_id = download_from_ipfs(client_id, False, cid)
+    #     glo.get_global_var("merge_clients_id_list").append(merge_client_id)
 
     # merge models. merge process won't start before all submodels have been downloaded
     print_log("submodels downloading finished.")
@@ -230,20 +231,26 @@ if __name__ == '__main__':
     glo.set_global_var("global_model_path", f"models/global/client-{client_id}/global_model.pkl")
     glo.set_global_var("sub_model_path", f"models/clients/client-{client_id}/sub_model.pkl")
     glo.set_global_var("job_info_path", f"jobs_info/client-{client_id}")
+    glo.set_global_var("clients_merge_rounds_list", [0 for i in range(clients_num)])
+    glo.set_global_var("clients_data_scale_list", [0 for i in range(clients_num)])
     executor = ThreadPoolExecutor(10)
     dapp_port = int(local_port) + 10000
     dapp_address = f"localhost:{dapp_port}"
     local_address = f"{local_host}:{local_port}"
 
     # create directory
-    path_list = [f"models/global/client-{client_id}",
-                 f"models/clients/client-{client_id}",
-                 f"models/downloads/client-{client_id}",
-                 f"jobs_info/client-{client_id}",
-                 f"results/client-{client_id}",
-                 f"results/global",
-                 f"pics",
-                 f"logs"]
+    path_list = [
+        # f"models/global/client-{client_id}",
+        # f"models/clients/client-{client_id}",
+        # f"models/downloads/client-{client_id}",
+        f"jobs_info/client-{client_id}",
+        f"results/client-{client_id}",
+        f"results/global",
+        f"results/machine_status_results",
+        # f"results/task_run_results",
+        f"pics",
+        f"logs"
+    ]
     
     for path in path_list:
         if os.path.exists(path):
