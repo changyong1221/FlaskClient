@@ -6,12 +6,12 @@ from src_scheduling.log import print_log
 def convert_str_to_list(src_str):
     ret_list = []
     left = 0
-    right = src_str.find(' ')
+    right = src_str.find(b' ')
     while right != -1:
         num = int(src_str[left:right])
         ret_list.append(num)
         left = right + 1
-        right = src_str.find(' ', left)
+        right = src_str.find(b' ', left)
     return ret_list
 
 
@@ -19,6 +19,7 @@ def model_file_wrapper(filename, model_path, is_global):
     with open(model_path, 'rb') as f:
         content = f.read()
         f.close()
+        print_log(f"wrapper filename: {filename}")
 
         # 1. global model
         if is_global:
@@ -32,6 +33,16 @@ def model_file_wrapper(filename, model_path, is_global):
             round_list_str = ""
             for elem in round_list:
                 round_list_str += f"{elem} "
+                
+            # init model
+            # all_rounds = 0
+            # print(f"wrapper all_rounds: {all_rounds}")
+            # clients_num = 10
+            # round_list = [0 for i in range(clients_num)]
+            # print(f"wrapper round_list: {round_list}")
+            # round_list_str = ""
+            # for elem in round_list:
+            #     round_list_str += f"{elem} "
 
             wrapped_file = f'{filename}\n{all_rounds}\n{round_list_str}\n'.encode('utf-8') + content
             # wrapped_file = f'{filename}\n'.encode('utf-8') + content
@@ -134,6 +145,6 @@ if __name__ == '__main__':
     # print(cid)
 
     # download file
-    cid = "QmR2EoCjd9Vrhps2aSH8xzq9iPjBY4JDGTADtB94Y6jdB4"
-    merge_client_id = download_from_ipfs(1, False, cid)
+    cid = "QmQPv43Cg6oRQiPvMxykyAtFsKpAUvqakmL4qfcFcQe7i5"
+    merge_client_id = download_from_ipfs(1, True, cid)
     print(merge_client_id)

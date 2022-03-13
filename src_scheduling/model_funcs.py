@@ -119,7 +119,7 @@ def merge_models_and_test():
 
     global_model_score = global_processing_time
     retSet = {"clients_scores": client_score_list, "global_score": int(global_model_score)}
-    print_log(retSet)
+    print_log(f"merge results-> {retSet}")
     glo.set_global_var("is_federated_test", False)
     return retSet
 

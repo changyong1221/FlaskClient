@@ -1,7 +1,8 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-import src.globals as glo
+import src_scheduling.globals as glo
+
 
 
 def check_and_build_dir(dir_path):

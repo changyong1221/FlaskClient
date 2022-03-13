@@ -194,17 +194,29 @@ class FedServer(nn.Module):
         round_list = glo.get_global_var("clients_merge_rounds_list")
         all_rounds = glo.get_global_var("current_round")
         data_scale_list = glo.get_global_var("clients_data_scale_list")
+        print_log(f"federated round: {all_rounds}")
+        print_log(f"round_list: {round_list}")
+        print_log(f"data_scale_list: {data_scale_list}")
         all_data_scale = 0
+        all_merge_rounds = 0
         for data in data_scale_list:
             all_data_scale += data
+        for merge_round in round_list:
+            all_merge_rounds += merge_round
+        print_log(f"all_data_scale: {all_data_scale}")
+        print_log(f"all_merge_rounds: {all_merge_rounds}")
         for i, model_path in enumerate(model_path_list):
             # compute weights
-            round_weight = round_list[i] / all_rounds
+            round_weight = round_list[i] / all_merge_rounds
             data_scale_weight = data_scale_list[i] / all_data_scale
-            print_log("round_weight: ", round_weight)
-            print_log("data_scale_weight: ", data_scale_weight)
-            weight = min(round_weight, data_scale_weight)
-            print_log("weight: ", weight)
+            print_log(f"round_weight: {round_weight}")
+            print_log(f"data_scale_weight: {data_scale_weight}")
+            weight = round_weight * 0.5 + data_scale_weight * 0.5
+            print_log(f"weight: {weight}")
+            if weight <= 0:
+                print_log("weight adjust")
+                weight = 1 / len(merge_clients_id_list)
+                print_log(f"adjusted weight: {weight}")
 
             cur_parameters = torch.load(model_path)
             if clients_weights_sum is None:

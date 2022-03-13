@@ -40,7 +40,7 @@ def train():
         return json.dumps({"status": "start training..."})
 
 
-@app.route("/infoSubmit", methods=['GET'])
+@app.route("/infoSubmit", methods=['POST'])
 def submit_submodel():
     if glo.get_global_var("update_status") is not "todo":
         return json.dumps({"status": "updating"})
@@ -86,18 +86,18 @@ def train_working():
     glo.set_global_var("train_status", "finished")
 
 
-@app.route("/infoWork", methods=['GET'])
+@app.route("/infoWork", methods=['POST'])
 def merge_models():
     if glo.get_global_var("update_status") is not "todo":
         return json.dumps({"status": "updating"})
     if glo.get_global_var("train_status") is not "todo":
         return json.dumps({"status": "training"})
     if glo.get_global_var("merge_status") == "todo":
-        # model_ids = request.json["models"]
-        model_ids = ["QmQs9BHpYyeNUSkfCBJAxccsCZ8uBh3MFxvtprUTadve66000000000000000000",
-                     "QmTFLTt94Km1A5w2TXSBPBsKu46c64795tFURQGNk13tF7000000000000000000",
-                     "QmP1iU7kZJ7ExJvsHX8ddkN4RjRMRhMShExDdjsfQPhqyH000000000000000000",
-                     "QmeoNqpk4MuLY74CiARbGFcXNwv8T2PUMSkU34mU29rZaD000000000000000000"]
+        model_ids = request.json["models"]
+        # model_ids = ["QmQs9BHpYyeNUSkfCBJAxccsCZ8uBh3MFxvtprUTadve66000000000000000000",
+        #              "QmTFLTt94Km1A5w2TXSBPBsKu46c64795tFURQGNk13tF7000000000000000000",
+        #              "QmP1iU7kZJ7ExJvsHX8ddkN4RjRMRhMShExDdjsfQPhqyH000000000000000000",
+        #              "QmeoNqpk4MuLY74CiARbGFcXNwv8T2PUMSkU34mU29rZaD000000000000000000"]
         executor.submit(merge_models_work, (model_ids))
         return json.dumps({"status": "request received, start merging"})
     elif glo.get_global_var("merge_status") == "merging":
@@ -117,10 +117,10 @@ def merge_models_work(model_ids):
     glo.set_global_var("merge_clients_num", len(model_ids))
     client_id = glo.get_global_var("client_id")
     # get all submodels from swarm
-    # print_log("start downloading submodels.")
-    # for cid in model_ids:
-    #     merge_client_id = download_from_ipfs(client_id, False, cid)
-    #     glo.get_global_var("merge_clients_id_list").append(merge_client_id)
+    print_log("start downloading submodels.")
+    for cid in model_ids:
+        merge_client_id = download_from_ipfs(client_id, False, cid)
+        glo.get_global_var("merge_clients_id_list").append(merge_client_id)
 
     # merge models. merge process won't start before all submodels have been downloaded
     print_log("submodels downloading finished.")
@@ -240,14 +240,14 @@ if __name__ == '__main__':
 
     # create directory
     path_list = [
-        # f"models/global/client-{client_id}",
-        # f"models/clients/client-{client_id}",
-        # f"models/downloads/client-{client_id}",
+        f"models/global/client-{client_id}",
+        f"models/clients/client-{client_id}",
+        f"models/downloads/client-{client_id}",
         f"jobs_info/client-{client_id}",
         f"results/client-{client_id}",
         f"results/global",
         f"results/machine_status_results",
-        # f"results/task_run_results",
+        f"results/task_run_results",
         f"pics",
         f"logs"
     ]
