@@ -10,8 +10,7 @@ def check_and_build_dir(dir_path):
         os.makedirs(dir_path)
 
 
-def save_results(data, data_type, is_global):
-    client_id = glo.get_global_var("client_id")
+def save_results(data, data_type, is_global, client_id):
     if is_global:
         save_path = "results/global/global_processing_time.txt"
     else:

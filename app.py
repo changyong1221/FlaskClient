@@ -15,6 +15,8 @@ import socket
 from multiprocessing import Process
 import shutil
 import torch
+import numpy as np
+import time
 
 
 app = Flask(__name__)
@@ -118,6 +120,7 @@ def merge_models_work(model_ids):
     client_id = glo.get_global_var("client_id")
     # get all submodels from swarm
     print_log("start downloading submodels.")
+    print_log(f"model_ids: {model_ids}")
     for cid in model_ids:
         merge_client_id = download_from_ipfs(client_id, False, cid)
         glo.get_global_var("merge_clients_id_list").append(merge_client_id)
@@ -135,7 +138,7 @@ def merge_models_work(model_ids):
     print_log("global model uploading finished.")
 
     # stop training when global model score reached 900
-    if scores["global_score"] > 900:
+    if scores["global_score"] < 10000:
         is_stop = True
     else:
         is_stop = False
@@ -223,6 +226,9 @@ if __name__ == '__main__':
     client_id = args.id
     # client_id = 2
     clients_num = args.clients_num
+    random_time = np.random.randint(5)
+    time.sleep(random_time)
+    print_log(f"client-{client_id} started.")
 
 
     # Initialization
@@ -249,16 +255,19 @@ if __name__ == '__main__':
         f"results/machine_status_results",
         f"results/task_run_results",
         f"pics",
-        f"logs"
+        f"logs/client-{client_id}"
     ]
     
     for path in path_list:
-        if os.path.exists(path):
-            shutil.rmtree(path)
-        os.makedirs(path)
+        if not os.path.exists(path):
+            os.makedirs(path)
+    # for path in path_list:
+    #     if os.path.exists(path):
+    #         shutil.rmtree(path)
+    #     os.makedirs(path)
 
     # dataset = DataSet(client_id)
-    initialize_global_model()
+    # initialize_global_model()
     # preheat_for_first_round(dataset)
 
     app.run(host=local_host, port=args.port)

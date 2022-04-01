@@ -58,7 +58,11 @@ class TaskRunInstance(Task):
                                                           machine.latitude,
                                                           glo_file.location_longitude,
                                                           glo_file.location_latitude) / glo_file.line_transmit_speed
-        # print_log(f"line_transmit_time: {line_transmit_time} s")
+        print_log(f"line_transmit_time: {line_transmit_time} s")
+        print_log(f"self.size: {self.size}")
+        print_log(f"self.mi: {self.mi}")
+        print_log(f"machine.bandwidth: {machine.get_bandwidth()}")
+        print_log(f"machine.mips: {machine.get_mips()}")
         self.task_transfer_time = round(self.size / machine.get_bandwidth() + line_transmit_time, 4)
         self.task_waiting_time = round(max(0, machine.get_finish_time() - self.commit_time), 4)
         self.task_executing_time = round(self.mi / machine.get_mips(), 4)

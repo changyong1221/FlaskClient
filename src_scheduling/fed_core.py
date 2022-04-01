@@ -8,6 +8,7 @@ from torch import optim
 import copy
 from src_scheduling.log import print_log
 import math
+import time
 from core.domain import create_domains, create_multi_domain
 from scheduler.RoundRobinScheduler import RoundRobinScheduler
 from scheduler.DQNScheduler import DQNScheduler
@@ -62,7 +63,7 @@ class FedClient(nn.Module):
             multi_domain.add_domain(domain)
 
         # 6. load tasks
-        task_file_path = f"dataset/Alibaba/client/Alibaba-Cluster-trace-100000-client-{client_id}.txt"
+        task_file_path = f"dataset/Alibaba/client/Alibaba-Cluster-trace-100000-client-{client_id - 1}.txt"
         task_batch_list = sample_task_batches_from_file(task_file_path, batch_num=n_batches, delimiter='\t')
 
         # compute tasks num in batches
@@ -153,11 +154,15 @@ class FedClient(nn.Module):
         epochs = 100
         diff = balance_prob_init - balance_prob_target
         balance_prob_step = diff / epochs
-        if epoch < 10:
-            epoch = 10
         if epoch > epochs:
             epoch = epochs
-        balance_prob = balance_prob_init - balance_prob_step * (epoch - 10)
+        balance_prob = balance_prob_init - balance_prob_step * epoch
+        balance_prob = balance_prob * 2
+        if balance_prob > 1.0:
+            balance_prob = 1.0
+        print_log(f"client model testing...")
+        print_log(f"epoch: {epoch}")
+        print_log(f"balance_prob: {balance_prob}")
         scheduler = DQNScheduler(multi_domain.multidomain_id, machine_num, task_batch_num, machine_kind_num_list,
                                  machine_kind_idx_range_list, balance_prob=balance_prob)
 
@@ -189,26 +194,30 @@ class FedServer(nn.Module):
     def fed_avg(self, model_path_list, merge_clients_id_list):
         # FL average
         # load client weights and do weights processing
+        client_id = glo.get_global_var("client_id")
+        
         clients_weights_sum = None
         clients_num = len(model_path_list)
         round_list = glo.get_global_var("clients_merge_rounds_list")
         all_rounds = glo.get_global_var("current_round")
         data_scale_list = glo.get_global_var("clients_data_scale_list")
+        print_log(f"merge_clients_id_list: {merge_clients_id_list}")
         print_log(f"federated round: {all_rounds}")
         print_log(f"round_list: {round_list}")
         print_log(f"data_scale_list: {data_scale_list}")
         all_data_scale = 0
         all_merge_rounds = 0
-        for data in data_scale_list:
-            all_data_scale += data
-        for merge_round in round_list:
-            all_merge_rounds += merge_round
+        for merge_id in merge_clients_id_list:
+            all_data_scale += data_scale_list[merge_id - 1]
+            all_merge_rounds += round_list[merge_id - 1]
         print_log(f"all_data_scale: {all_data_scale}")
         print_log(f"all_merge_rounds: {all_merge_rounds}")
         for i, model_path in enumerate(model_path_list):
             # compute weights
-            round_weight = round_list[i] / all_merge_rounds
-            data_scale_weight = data_scale_list[i] / all_data_scale
+            merge_idx = merge_clients_id_list[i] - 1;
+            print_log(f"merge_idx: {merge_idx}")
+            round_weight = round_list[merge_idx] / all_merge_rounds
+            data_scale_weight = data_scale_list[merge_idx] / all_data_scale
             print_log(f"round_weight: {round_weight}")
             print_log(f"data_scale_weight: {data_scale_weight}")
             weight = round_weight * 0.5 + data_scale_weight * 0.5
@@ -280,13 +289,16 @@ class FedServer(nn.Module):
 
         epoch = glo.get_global_var("current_round")
         balance_prob_target = 0.3
-        balance_prob_init = 1.0
+        balance_prob_init = 0.8
         epochs = 100
         diff = balance_prob_init - balance_prob_target
         balance_prob_step = diff / epochs
         if epoch > epochs:
             epoch = epochs
         balance_prob = balance_prob_init - balance_prob_step * epoch
+        print_log(f"global model testing...")
+        print_log(f"epoch: {epoch}")
+        print_log(f"balance_prob: {balance_prob}")
         scheduler = DQNScheduler(multi_domain.multidomain_id, machine_num, task_batch_num, machine_kind_num_list,
                                  machine_kind_idx_range_list, balance_prob=balance_prob)
 

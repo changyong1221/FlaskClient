@@ -48,6 +48,7 @@ class DQNScheduler(Scheduler):
         # if (step == 1): print_log("machines_id: " + str(machines_id))
 
     def learn(self, task_instance_batch, machines_id, makespan):
+        print_log(f"enter learn...")
         for idx, task in enumerate(task_instance_batch):  # 便历新提交的一批任务，记录动作和奖励
             self.action_all.append([machines_id[idx]])
             # if (task.get_task_mi() < 3000 and machines_id[idx] < 6) or \

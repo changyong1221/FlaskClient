@@ -35,7 +35,9 @@ class Machine(object):
         """
         self.batch_makespan = 0
         for task in self.task_waiting_queue:
+            print_log(f"before run_on_machine...")
             task.run_on_machine(self, multidomain_id)
+            print_log(f"after run_on_machine...")
             self.work_time += task.get_task_processing_time()
             self.batch_makespan += task.get_task_processing_time()
             self.realtime_cpu_utilization = task.get_task_cpu_utilization()

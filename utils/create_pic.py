@@ -60,13 +60,14 @@ def save_compare_pic_from_vector(data_vector, labels, dest_dir, plt_config, show
     plt.title(plt_config.title)
     plt.xlabel(plt_config.xlabel)
     plt.ylabel(plt_config.ylabel)
-    x_axis_data = plt_config.x_axis_data
+    # x_axis_data = plt_config.x_axis_data
 
     n_schedulers = len(data_vector)
     linewidth = 1.8
-    color_list = ['green', 'red', 'slategrey', 'orange', 'lightskyblue', 'blue']
+    color_list = ['red', 'green', 'slategrey', 'orange', 'lightskyblue', 'blue']
     for i in range(n_schedulers):
-        plt.plot(x_axis_data, data_vector[i], label=labels[i], linewidth=linewidth, color=color_list[i])
+        plt.plot(data_vector[i], label=labels[i], linewidth=linewidth, color=color_list[i])
+        # plt.plot(x_axis_data, data_vector[i], label=labels[i], linewidth=linewidth, color=color_list[i])
 
     # 设置图例
     plt.legend(loc='best')

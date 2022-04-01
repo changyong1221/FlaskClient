@@ -67,6 +67,8 @@ def model_file_unwrapper(wrapped_data, is_global):
         all_rounds = int(wrapped_data[left:right])
         glo.set_global_var("all_rounds", all_rounds)
         print_log(f'unwrapper all_rounds: {all_rounds}')
+        glo.set_global_var("current_round", all_rounds)
+        print_log(f'unwrapper current_round: {all_rounds}')
 
         left = right + 1
         right = wrapped_data.find(b'\n', left)
@@ -117,6 +119,7 @@ def download_from_ipfs(client_id, is_global, cid):
         save_path = f'models/downloads/client-{client_id}/'
 
     # cid = cid_unwrapper(wrapped_cid)
+    print_log(f"downloading: {cid}")
     response = requests.post(f'http://127.0.0.1:5001/api/v0/cat?arg={cid}')
     wrapped_data = response.content
     filename, data_scale, original_data = model_file_unwrapper(wrapped_data, is_global)
@@ -131,8 +134,9 @@ def download_from_ipfs(client_id, is_global, cid):
         merge_client_id_str = filename[:filename.find('.')]
         merge_client_id = (int)(merge_client_id_str)
         data_scale_list = glo.get_global_var("clients_data_scale_list")
-        data_scale_list[merge_client_id] = data_scale
+        data_scale_list[merge_client_id - 1] = data_scale
         glo.set_global_var("clients_data_scale_list", data_scale_list)
+        print_log(f"merge_client_id: {merge_client_id}")
     return merge_client_id
 
 

@@ -7,6 +7,34 @@ from utils.plt_config import PltConfig
 from src_scheduling.log import print_log
 
 
+# 分析联邦学习场景下的平均任务处理时间（算法对比）
+def analyze_federated_task_processing_time_results_comp():
+    # 1. settings
+    path = "../backup/processing_time/"
+    path_list = [
+            path + "global/global_processing_time.txt",
+            path + "client1/client_1_processing_time.txt"
+        ]
+
+    show_vector = []
+    # 1. read data
+    for data_path in path_list:
+        data = pd.read_csv(data_path, header=None)
+        data.columns = ['processing_time']
+        print(len(data))
+        show_vector.append(data['processing_time'].to_list())
+
+    # 2. 保存图片
+    output_path = f"pics/federated_task_processing_time_comp_version.png"
+    plt_config = PltConfig()
+    plt_config.title = "task processing time in federated learning"
+    plt_config.xlabel = "federated round"
+    plt_config.ylabel = "task processing time"
+    labels = ["global", "client"]
+    save_compare_pic_from_vector(show_vector, labels, output_path, plt_config, show=False)
+
+
+
 # 计算客户端任务调度用时
 def compute_client_avg_task_process_time(client_id, is_test=False):
     """Compute average task process time of different scheduling algorightm
@@ -205,6 +233,8 @@ def compute_avg_task_process_time_by_name(scheduler_name):
 if __name__ == '__main__':
     # analyze_task_results()
     # analyze_machine_results()
-    compute_avg_task_process_time()
-    compute_task_to_machine_map()
+    # compute_avg_task_process_time()
+    # compute_task_to_machine_map()
     # analyze_federated_task_processing_time_results()
+    analyze_federated_task_processing_time_results_comp()
+    

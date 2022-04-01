@@ -88,7 +88,7 @@ def merge_models_and_test():
     for merge_idx in merge_clients_id_list:
         print_log(f'models/downloads/client-{client_id}/{merge_idx}.pkl')
         models_path_list.append(f'models/downloads/client-{client_id}/{merge_idx}.pkl')
-        round_list[merge_idx] += 1
+        round_list[merge_idx - 1] += 1
 
 
     # models_path_list = [f"models/downloads/client-{client_id}/1.pkl",
@@ -104,18 +104,30 @@ def merge_models_and_test():
     print_log("weights average done.")
     print_log("start evaluating global model...")
     global_processing_time = global_model.evaluate()
+    # global_processing_time = 90000
     print_log(f'global_processing_time: {global_processing_time}')
-    save_results(global_processing_time, "TIME", True)
+    save_results(global_processing_time, "TIME", True, 10000)
+
+    # test only one client model
+    client_score_list = []
+    client_model = FedClient()
+    client_processing_time = client_model.evaluate(client_id)
+    # client_processing_time = 92000
+    client_processing_time = int(client_processing_time)
+    print_log(f'client({client_id})_model_processing_time: {client_processing_time}')
+    save_results(client_processing_time, "TIME", False, client_id)
+    for merge_idx in merge_clients_id_list:
+        client_score_list.append(client_processing_time)
 
     # get test scores of submodels
-    client_acc_list = []
-    client_score_list = []
-    for merge_idx in merge_clients_id_list:
-        client_model = FedClient()
-        client_processing_time = client_model.evaluate(merge_idx)
-        client_acc_list.append(client_processing_time)
-        client_score_list.append(client_processing_time)
-        print_log(f'client({merge_idx})_model_processing_time: {client_processing_time}')
+    # client_acc_list = []
+    # client_score_list = []
+    # for merge_idx in merge_clients_id_list:
+    #     client_model = FedClient()
+    #     client_processing_time = client_model.evaluate(merge_idx)
+    #     client_acc_list.append(client_processing_time)
+    #     client_score_list.append(client_processing_time)
+    #     print_log(f'client({merge_idx})_model_processing_time: {client_processing_time}')
 
     global_model_score = global_processing_time
     retSet = {"clients_scores": client_score_list, "global_score": int(global_model_score)}
