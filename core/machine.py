@@ -33,22 +33,27 @@ class Machine(object):
     def execute_tasks(self, multidomain_id):
         """Execute tasks in the task_waiting_queue
         """
+        # print_log("enter execute tasks")
         self.batch_makespan = 0
         for task in self.task_waiting_queue:
-            print_log(f"before run_on_machine...")
+            # print_log(f"before run_on_machine...")
             task.run_on_machine(self, multidomain_id)
-            print_log(f"after run_on_machine...")
+            # print_log(f"after run_on_machine...")
             self.work_time += task.get_task_processing_time()
             self.batch_makespan += task.get_task_processing_time()
             self.realtime_cpu_utilization = task.get_task_cpu_utilization()
             self.realtime_memory_utilization = round(task.get_task_size() / self.memory, 4)
             self.realtime_bandwidth_utilization = 1
             scheduler_name = glo.get_global_var("current_scheduler")
-            output_dir = f"results/machine_status_results/train/client-{multidomain_id}/{scheduler_name}/{glo.get_global_var('current_round')}"
+            output_dir = f"results/machine_status_results/client-{multidomain_id}/train/{scheduler_name}/{glo.get_global_var('current_round')}"
             check_and_build_dir(output_dir)
             output_path = output_dir + f"/{self.machine_id}_status.txt"
-            if glo.get_global_var("is_federated_test"):
-                output_dir = f"results/machine_status_results/test/client-{multidomain_id}/{scheduler_name}/{glo.get_global_var('current_round')}"
+            if glo.get_global_var("is_client_test"):
+                output_dir = f"results/machine_status_results/client-{multidomain_id}/test/{scheduler_name}/{glo.get_global_var('current_round')}"
+                check_and_build_dir(output_dir)
+                output_path = output_dir + f"/{self.machine_id}_status.txt"
+            if glo.get_global_var("is_global_test"):
+                output_dir = f"results/machine_status_results/global/client-{multidomain_id}/test/{scheduler_name}/{glo.get_global_var('current_round')}"
                 check_and_build_dir(output_dir)
                 output_path = output_dir + f"/{self.machine_id}_status.txt"
             output_list = [self.work_time, self.realtime_cpu_utilization, self.realtime_memory_utilization,

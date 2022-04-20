@@ -223,11 +223,15 @@ class MultiDomain(object):
         makespan = round(makespan, 4)
         avg_worktime = round(worktime / len(self.machine_list), 4)
 
-        output_dir = f"results/task_run_results/train/batch/client-{self.multidomain_id}/{glo.get_global_var('current_round')}"
+        output_dir = f"results/task_run_results/client-{self.multidomain_id}/train/batch/{glo.get_global_var('current_round')}"
         check_and_build_dir(output_dir)
         output_path = output_dir + "/task_batches_run_results.txt"
-        if glo.get_global_var("is_federated_test"):
-            output_dir = f"results/task_run_results/test/batch/client-{self.multidomain_id}/{glo.get_global_var('current_round')}"
+        if glo.get_global_var("is_client_test"):
+            output_dir = f"results/task_run_results/client-{self.multidomain_id}/test/batch/{glo.get_global_var('current_round')}"
+            check_and_build_dir(output_dir)
+            output_path = output_dir + "/task_batches_run_results.txt"
+        if glo.get_global_var("is_global_test"):
+            output_dir = f"results/task_run_results/global/client-{self.multidomain_id}/test/batch/{glo.get_global_var('current_round')}"
             check_and_build_dir(output_dir)
             output_path = output_dir + "/task_batches_run_results.txt"
         output_list = [batch_avg_task_processing_time, makespan, avg_worktime]

@@ -37,6 +37,7 @@ class DQNScheduler(Scheduler):
         print_log("DQN网络初始化成功！")
 
     def schedule(self, task_instance_batch, machine_list):
+        # print_log("enter schedule")
         task_num = len(task_instance_batch)
 
         states = get_state(task_instance_batch, machine_list)
@@ -48,7 +49,7 @@ class DQNScheduler(Scheduler):
         # if (step == 1): print_log("machines_id: " + str(machines_id))
 
     def learn(self, task_instance_batch, machines_id, makespan):
-        print_log(f"enter learn...")
+        # print_log(f"enter learn...")
         for idx, task in enumerate(task_instance_batch):  # 便历新提交的一批任务，记录动作和奖励
             self.action_all.append([machines_id[idx]])
             # if (task.get_task_mi() < 3000 and machines_id[idx] < 6) or \
@@ -64,8 +65,12 @@ class DQNScheduler(Scheduler):
             # else:
             #     reward = 0
 
-            reward = self.C / (self.alpha * math.log(task.get_task_processing_time(), 10) +
-                               self.beta * math.log(makespan, 10))
+            # print_log(f"task.get_task_processing_time(): {task.get_task_processing_time()}")
+            # print_log(f"makespan: {makespan}")
+            task_item = 2 if task.get_task_processing_time() <= 2 else task.get_task_processing_time()
+            makespan_item = 2 if makespan <= 2 else makespan
+            reward = self.C / (self.alpha * math.log(task_item, 10) +
+                               self.beta * math.log(makespan_item, 10))
             # reward = task.get_task_mi() / task.get_task_processing_time() / 100
             # if task.get_task_mi() > 100000 and machines_id[idx] > 15:
             #     reward = 100

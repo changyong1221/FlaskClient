@@ -36,14 +36,17 @@ def analyze_federated_task_processing_time_results_comp():
 
 
 # 计算客户端任务调度用时
-def compute_client_avg_task_process_time(client_id, is_test=False):
+def compute_client_avg_task_process_time(client_id, is_test=False, is_global=False):
     """Compute average task process time of different scheduling algorightm
     """
     scheduler_name = glo.get_global_var("current_scheduler")
     if is_test:
-        data_path = f"results/task_run_results/test/client-{client_id}/{scheduler_name}/{glo.get_global_var('current_round')}/{scheduler_name}_task_run_results.txt"
+        if is_global:
+            data_path = f"results/task_run_results/global/client-{client_id}/test/{scheduler_name}/{glo.get_global_var('current_round')}/{scheduler_name}_task_run_results.txt"
+        else:
+            data_path = f"results/task_run_results/client-{client_id}/test/{scheduler_name}/{glo.get_global_var('current_round')}/{scheduler_name}_task_run_results.txt"
     else:
-        data_path = f"results/task_run_results/train/client-{client_id}/{scheduler_name}/{glo.get_global_var('current_round')}/{scheduler_name}_task_run_results.txt"
+        data_path = f"results/task_run_results/client-{client_id}/train/{scheduler_name}/{glo.get_global_var('current_round')}/{scheduler_name}_task_run_results.txt"
     data = pd.read_csv(data_path, header=None, delimiter='\t')
     data.columns = ['task_id', 'task_mi', 'machine_id', 'machine_mips', 'transfer_time', 'wait_time',
                     'execute_time', 'process_time']

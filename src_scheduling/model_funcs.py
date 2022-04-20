@@ -81,7 +81,6 @@ def merge_models_and_test():
     merge_clients_num = glo.get_global_var("merge_clients_num")
     merge_clients_id_list = glo.get_global_var("merge_clients_id_list")
     global_model_path = glo.get_global_var("global_model_path")
-    glo.set_global_var("is_federated_test", True)
 
     round_list = glo.get_global_var("clients_merge_rounds_list")
     models_path_list = []
@@ -103,15 +102,19 @@ def merge_models_and_test():
     global_model.fed_avg(models_path_list, merge_clients_id_list)
     print_log("weights average done.")
     print_log("start evaluating global model...")
-    global_processing_time = global_model.evaluate()
+    glo.set_global_var("is_global_test", True)
+    global_processing_time = global_model.evaluate(client_id)
+    glo.set_global_var("is_global_test", False)
     # global_processing_time = 90000
     print_log(f'global_processing_time: {global_processing_time}')
-    save_results(global_processing_time, "TIME", True, 10000)
+    save_results(global_processing_time, "TIME", True, client_id)
 
     # test only one client model
     client_score_list = []
     client_model = FedClient()
+    glo.set_global_var("is_client_test", True)
     client_processing_time = client_model.evaluate(client_id)
+    glo.set_global_var("is_client_test", False)
     # client_processing_time = 92000
     client_processing_time = int(client_processing_time)
     print_log(f'client({client_id})_model_processing_time: {client_processing_time}')
@@ -132,7 +135,6 @@ def merge_models_and_test():
     global_model_score = global_processing_time
     retSet = {"clients_scores": client_score_list, "global_score": int(global_model_score)}
     print_log(f"merge results-> {retSet}")
-    glo.set_global_var("is_federated_test", False)
     return retSet
 
 

@@ -6,7 +6,7 @@ import time
 def print_log(strs):
     client_id = glo.get_global_var("client_id")
     cur_date = time.strftime("%Y-%m-%d", time.localtime())
-    log_path = f"logs/{client_id}/client-{client_id}-{cur_date}.log"
+    log_path = f"logs/client-{client_id}/client-{client_id}-{cur_date}.log"
     cur_time = time.strftime("%H:%M:%S", time.localtime())
     log_str = f"[client-{client_id} {cur_time}]: {strs}"
     print(log_str)

@@ -11,20 +11,20 @@ from model.dqn.prioritized_memory import Memory
 from utils.file_check import check_and_build_dir
 from utils.state_representation import balancing, get_machine_kind_idx, task_adapting
 import src_scheduling.globals as glo
-from tensorflow_privacy.privacy.analysis.compute_noise_from_budget_lib import compute_noise
 from src_scheduling.log import print_log
+from differential_privacy.privacy_setting import q, eps, delta, tot_T, E, sigma
 
 
 GAMMA = 0.9  # reward discount，惩罚项
 TARGET_REPLACE_ITER = 50  # target update frequency，每过多少轮更新TargetNet
 
-# 差分隐私配置参数
-q = 0.03
-eps = 16.0
-delta = 1e-5
-tot_T = 100
-E = 1
-sigma = compute_noise(1, q, eps, E*tot_T, delta, 1e-5)      # 高斯分布系数
+# # 差分隐私配置参数
+# q = 0.03
+# eps = 16.0
+# delta = 1e-5
+# tot_T = 100
+# E = 1
+# sigma = compute_noise(1, q, eps, E*tot_T, delta, 1e-5)      # 高斯分布系数
 
 
 class DQN(object):
@@ -83,7 +83,6 @@ class DQN(object):
         self.E = E
         self.batch_size = 128
         self.sigma = sigma
-        
 
         if self.dueling_dqn:
             self.eval_net = Dueling_DQN(self.s_task_dim, self.s_vm_dim, self.a_dim)

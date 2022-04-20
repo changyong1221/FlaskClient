@@ -54,15 +54,16 @@ class TaskRunInstance(Task):
         传播时延 = 数据包大小(Mb) / 以太网链路速率(Mbps) + 传播距离(m) / 链路传播速率(m/s)
         默认链路传播速率 = 2.8 * 10^8 m/s
         """
+        # print_log("enter task run")
         line_transmit_time = compute_distance_by_location(machine.longitude,
                                                           machine.latitude,
                                                           glo_file.location_longitude,
                                                           glo_file.location_latitude) / glo_file.line_transmit_speed
-        print_log(f"line_transmit_time: {line_transmit_time} s")
-        print_log(f"self.size: {self.size}")
-        print_log(f"self.mi: {self.mi}")
-        print_log(f"machine.bandwidth: {machine.get_bandwidth()}")
-        print_log(f"machine.mips: {machine.get_mips()}")
+        # print_log(f"line_transmit_time: {line_transmit_time} s")
+        # print_log(f"self.size: {self.size}")
+        # print_log(f"self.mi: {self.mi}")
+        # print_log(f"machine.bandwidth: {machine.get_bandwidth()}")
+        # print_log(f"machine.mips: {machine.get_mips()}")
         self.task_transfer_time = round(self.size / machine.get_bandwidth() + line_transmit_time, 4)
         self.task_waiting_time = round(max(0, machine.get_finish_time() - self.commit_time), 4)
         self.task_executing_time = round(self.mi / machine.get_mips(), 4)
@@ -72,11 +73,15 @@ class TaskRunInstance(Task):
         self.is_done = True
 
         scheduler_name = glo.get_global_var("current_scheduler")
-        output_dir = f"results/task_run_results/train/client-{multidomain_id}/{scheduler_name}/{glo.get_global_var('current_round')}"
+        output_dir = f"results/task_run_results/client-{multidomain_id}/train/{scheduler_name}/{glo.get_global_var('current_round')}"
         check_and_build_dir(output_dir)
         output_path = output_dir + f"/{scheduler_name}_task_run_results.txt"
-        if glo.get_global_var("is_federated_test"):
-            output_dir = f"results/task_run_results/test/client-{multidomain_id}/{scheduler_name}/{glo.get_global_var('current_round')}"
+        if glo.get_global_var("is_client_test"):
+            output_dir = f"results/task_run_results/client-{multidomain_id}/test/{scheduler_name}/{glo.get_global_var('current_round')}"
+            check_and_build_dir(output_dir)
+            output_path = output_dir + f"/{scheduler_name}_task_run_results.txt"
+        if glo.get_global_var("is_global_test"):
+            output_dir = f"results/task_run_results/global/client-{multidomain_id}/test/{scheduler_name}/{glo.get_global_var('current_round')}"
             check_and_build_dir(output_dir)
             output_path = output_dir + f"/{scheduler_name}_task_run_results.txt"
         output_list = [self.task_id, self.get_task_mi(), machine.get_machine_id(), machine.get_mips(),

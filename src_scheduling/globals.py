@@ -26,7 +26,8 @@ def __init():
     _global_dict["clients_merge_rounds_list"] = []
     _global_dict["current_data_scale"] = 0
     _global_dict["clients_data_scale_list"] = []
-    _global_dict["is_federated_test"] = False
+    _global_dict["is_client_test"] = False
+    _global_dict["is_global_test"] = False
     _global_dict["privacy_level"] = 16
 
 

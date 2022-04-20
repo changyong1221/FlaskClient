@@ -12,12 +12,12 @@ def check_and_build_dir(dir_path):
 
 def save_results(data, data_type, is_global, client_id):
     if is_global:
-        save_path = "results/global/global_processing_time.txt"
+        save_path = f"results/processing_time/client-{client_id}/global_processing_time.txt"
     else:
         if data_type is 'LOSS':
-            save_path = f"results/client-{client_id}/client_{client_id}_loss.txt"
+            save_path = f"results/processing_time/client-{client_id}/client_{client_id}_loss.txt"
         elif data_type is 'TIME':
-            save_path = f"results/client-{client_id}/client_{client_id}_processing_time.txt"
+            save_path = f"results/processing_time/client-{client_id}/client_{client_id}_processing_time.txt"
     append_data_to_file(save_path, data)
 
 

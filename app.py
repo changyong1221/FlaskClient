@@ -228,8 +228,6 @@ if __name__ == '__main__':
     clients_num = args.clients_num
     random_time = np.random.randint(5)
     time.sleep(random_time)
-    print_log(f"client-{client_id} started.")
-
 
     # Initialization
     glo.set_global_var("clients_num", clients_num)
@@ -250,25 +248,26 @@ if __name__ == '__main__':
         f"models/clients/client-{client_id}",
         f"models/downloads/client-{client_id}",
         f"jobs_info/client-{client_id}",
-        f"results/client-{client_id}",
-        f"results/global",
-        f"results/machine_status_results",
-        f"results/task_run_results",
-        f"pics",
+        f"results/processing_time/client-{client_id}",
+        f"results/machine_status_results/client-{client_id}",
+        f"results/machine_status_results/global/client-{client_id}",
+        f"results/task_run_results/client-{client_id}",
+        f"results/task_run_results/global/client-{client_id}",
         f"logs/client-{client_id}"
     ]
     
-    for path in path_list:
-        if not os.path.exists(path):
-            os.makedirs(path)
     # for path in path_list:
-    #     if os.path.exists(path):
-    #         shutil.rmtree(path)
-    #     os.makedirs(path)
+    #     if not os.path.exists(path):
+    #         os.makedirs(path)
+    for path in path_list:
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        os.makedirs(path)
 
     # dataset = DataSet(client_id)
     # initialize_global_model()
     # preheat_for_first_round(dataset)
+    print_log(f"client-{client_id} started.")
 
     app.run(host=local_host, port=args.port)
 

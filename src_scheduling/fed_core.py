@@ -18,6 +18,7 @@ from utils.load_data import load_machines_from_file, load_task_batches_from_file
 from utils.file_check import check_and_build_dir
 from utils.state_representation import get_machine_kind_list
 import src_scheduling.globals as glo
+from differential_privacy.privacy_setting import eps
 
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -84,16 +85,26 @@ class FedClient(nn.Module):
         machine_kind_num_list, machine_kind_idx_range_list = get_machine_kind_list(machine_list)
 
         epoch = glo.get_global_var("current_round")
-        balance_prob_target = 0.3
+        # [1.0, 0.5] -> [1.0, 0.9]
+        eps_range = 16
+        eps_factor = eps
+        if eps > 16:
+            eps_factor = 16
+        elif eps < 0:
+            eps_factor = 0
+        
+        balance_prob_max = 0.9
+        balance_prob_min = 0.5
+        balance_prob_eps_step = (balance_prob_max - balance_prob_min) / eps_range
+        balance_prob_target = balance_prob_max - balance_prob_eps_step * eps_factor
+        # balance_prob_target = 0.5
         balance_prob_init = 1.0
         epochs = 100
         diff = balance_prob_init - balance_prob_target
         balance_prob_step = diff / epochs
-        if epoch < 1:
-            epoch = 1
         if epoch > epochs:
             epoch = epochs
-        balance_prob = balance_prob_init - balance_prob_step * (epoch - 1)
+        balance_prob = balance_prob_init - balance_prob_step * epoch
         scheduler = DQNScheduler(multi_domain.multidomain_id, machine_num, task_batch_num, machine_kind_num_list,
                                  machine_kind_idx_range_list, balance_prob=balance_prob)
         multi_domain.set_scheduler(scheduler)
@@ -141,6 +152,8 @@ class FedClient(nn.Module):
         task_file_path = f"dataset/Alibaba/Alibaba-Cluster-trace-100000-test.txt"
         # task_file_path = f"dataset/Alibaba/Alibaba-Cluster-trace-5000-test.txt"
         tasks_for_test = load_task_batches_from_file(task_file_path, delimiter='\t')
+        tasks_for_test = tasks_for_test[0:674] + tasks_for_test[675:]
+        print_log(f"len(tasks_for_test): {len(tasks_for_test)}")
 
         # 7. set scheduler for multi-domain system
         machine_num = len(machine_list)
@@ -149,7 +162,20 @@ class FedClient(nn.Module):
         machine_kind_num_list, machine_kind_idx_range_list = get_machine_kind_list(machine_list)
 
         epoch = glo.get_global_var("current_round")
-        balance_prob_target = 0.3
+        print_log(f"epoch: {epoch}")
+        # [1.0, 0.5] -> [1.0, 0.9]
+        eps_range = 16
+        eps_factor = eps
+        if eps > 16:
+            eps_factor = 16
+        elif eps < 0:
+            eps_factor = 0
+        
+        balance_prob_max = 0.9
+        balance_prob_min = 0.5
+        balance_prob_eps_step = (balance_prob_max - balance_prob_min) / eps_range
+        balance_prob_target = balance_prob_max - balance_prob_eps_step * eps_factor
+        # balance_prob_target = 0.5
         balance_prob_init = 1.0
         epochs = 100
         diff = balance_prob_init - balance_prob_target
@@ -157,11 +183,7 @@ class FedClient(nn.Module):
         if epoch > epochs:
             epoch = epochs
         balance_prob = balance_prob_init - balance_prob_step * epoch
-        balance_prob = balance_prob * 2
-        if balance_prob > 1.0:
-            balance_prob = 1.0
         print_log(f"client model testing...")
-        print_log(f"epoch: {epoch}")
         print_log(f"balance_prob: {balance_prob}")
         scheduler = DQNScheduler(multi_domain.multidomain_id, machine_num, task_batch_num, machine_kind_num_list,
                                  machine_kind_idx_range_list, balance_prob=balance_prob)
@@ -176,7 +198,7 @@ class FedClient(nn.Module):
         # 9. reset multi-domain system
         multi_domain.reset()
 
-        processing_time = compute_client_avg_task_process_time(client_id, is_test=True)
+        processing_time = compute_client_avg_task_process_time(client_id, is_test=True, is_global=False)
         return processing_time
 
 
@@ -214,19 +236,20 @@ class FedServer(nn.Module):
         print_log(f"all_merge_rounds: {all_merge_rounds}")
         for i, model_path in enumerate(model_path_list):
             # compute weights
-            merge_idx = merge_clients_id_list[i] - 1;
-            print_log(f"merge_idx: {merge_idx}")
-            round_weight = round_list[merge_idx] / all_merge_rounds
-            data_scale_weight = data_scale_list[merge_idx] / all_data_scale
-            print_log(f"round_weight: {round_weight}")
-            print_log(f"data_scale_weight: {data_scale_weight}")
-            weight = round_weight * 0.5 + data_scale_weight * 0.5
-            print_log(f"weight: {weight}")
-            if weight <= 0:
-                print_log("weight adjust")
-                weight = 1 / len(merge_clients_id_list)
-                print_log(f"adjusted weight: {weight}")
+            # merge_idx = merge_clients_id_list[i] - 1;
+            # print_log(f"merge_idx: {merge_idx}")
+            # round_weight = round_list[merge_idx] / all_merge_rounds
+            # data_scale_weight = data_scale_list[merge_idx] / all_data_scale
+            # print_log(f"round_weight: {round_weight}")
+            # print_log(f"data_scale_weight: {data_scale_weight}")
+            # weight = round_weight * 0.5 + data_scale_weight * 0.5
+            # print_log(f"weight: {weight}")
+            # if weight <= 0:
+            #     print_log("weight adjust")
+            #     weight = 1 / len(merge_clients_id_list)
+            #     print_log(f"adjusted weight: {weight}")
 
+            weight = 0.1
             cur_parameters = torch.load(model_path)
             if clients_weights_sum is None:
                 clients_weights_sum = {}
@@ -243,12 +266,12 @@ class FedServer(nn.Module):
         global_model_path = glo.get_global_var("global_model_path")
         torch.save(global_weights, global_model_path)
 
-    def evaluate(self):
+    def evaluate(self, client_id):
         """Perform inter-domain task scheduling
         """
         # 1. create multi-domain system
         multi_domain_system_location = "北京市"
-        client_id = 10000  # federated server
+        # client_id = 10000  # federated server
         multi_domain = create_multi_domain(client_id, multi_domain_system_location)
 
         # 2. create domains
@@ -280,6 +303,8 @@ class FedServer(nn.Module):
         task_file_path = f"dataset/Alibaba/Alibaba-Cluster-trace-100000-test.txt"
         # task_file_path = f"dataset/Alibaba/Alibaba-Cluster-trace-5000-test.txt"
         tasks_for_test = load_task_batches_from_file(task_file_path, delimiter='\t')
+        tasks_for_test = tasks_for_test[0:674] + tasks_for_test[675:]
+        print_log(f"len(tasks_for_test): {len(tasks_for_test)}")
 
         # 7. set scheduler for multi-domain system
         machine_num = len(machine_list)
@@ -288,8 +313,21 @@ class FedServer(nn.Module):
         machine_kind_num_list, machine_kind_idx_range_list = get_machine_kind_list(machine_list)
 
         epoch = glo.get_global_var("current_round")
-        balance_prob_target = 0.3
-        balance_prob_init = 0.8
+        print_log(f"epoch: {epoch}")
+        # [0.9, 0.3] -> [0.9, 0.7]
+        eps_range = 16
+        eps_factor = eps
+        if eps > 16:
+            eps_factor = 16
+        elif eps < 0:
+            eps_factor = 0
+        
+        balance_prob_max = 0.85
+        balance_prob_min = 0.3
+        balance_prob_eps_step = (balance_prob_max - balance_prob_min) / eps_range
+        balance_prob_target = balance_prob_max - balance_prob_eps_step * eps_factor
+        # balance_prob_target = 0.3
+        balance_prob_init = 0.9
         epochs = 100
         diff = balance_prob_init - balance_prob_target
         balance_prob_step = diff / epochs
@@ -297,7 +335,6 @@ class FedServer(nn.Module):
             epoch = epochs
         balance_prob = balance_prob_init - balance_prob_step * epoch
         print_log(f"global model testing...")
-        print_log(f"epoch: {epoch}")
         print_log(f"balance_prob: {balance_prob}")
         scheduler = DQNScheduler(multi_domain.multidomain_id, machine_num, task_batch_num, machine_kind_num_list,
                                  machine_kind_idx_range_list, balance_prob=balance_prob)
@@ -312,7 +349,7 @@ class FedServer(nn.Module):
         # 9. reset multi-domain system
         multi_domain.reset()
 
-        processing_time = compute_client_avg_task_process_time(10000, is_test=True)
+        processing_time = compute_client_avg_task_process_time(client_id, is_test=True, is_global=True)
         return processing_time
 
 

@@ -143,12 +143,13 @@ def download_from_ipfs(client_id, is_global, cid):
 if __name__ == '__main__':
     # pass
     # upload file
-    # client_id = 1
+    client_id = 1
     # data_path = "../initial_model/global_model.pkl"
-    # cid = upload_to_ipfs(client_id, True, data_path)
-    # print(cid)
+    data_path = "../models/global/client-3/global_model.pkl"
+    cid = upload_to_ipfs(client_id, True, data_path)
+    print(cid)
 
     # download file
-    cid = "QmQPv43Cg6oRQiPvMxykyAtFsKpAUvqakmL4qfcFcQe7i5"
-    merge_client_id = download_from_ipfs(1, True, cid)
-    print(merge_client_id)
+    # cid = "QmQPv43Cg6oRQiPvMxykyAtFsKpAUvqakmL4qfcFcQe7i5"
+    # merge_client_id = download_from_ipfs(1, True, cid)
+    # print(merge_client_id)
