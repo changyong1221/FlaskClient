@@ -8,6 +8,7 @@ from src.net_core import MnistCNN
 import torch.nn.functional as F
 from torch import optim
 import copy
+import src.globals as glo
 
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -122,11 +123,12 @@ class FedServer(nn.Module):
             new_par[name] = torch.zeros(new_par[name].shape).to(dev)
         for idx, par in enumerate(model_par):
             # w = self.weight[idxs_users[idx]] / np.sum(self.weight[:])
-            w = 0.1
+            # w = 0.1
             for name in new_par:
                 # new_par[name] += par[name] * (self.weight[idxs_users[idx]] / np.sum(self.weight[idxs_users]))
                 # new_par[name] += par[name] * (w / self.C)
-                new_par[name] += par[name] * w
+                # new_par[name] += par[name] / 5
+                new_par[name] += par[name] / glo.get_global_var("clients_num")
         self.model.load_state_dict(copy.deepcopy(new_par))
 
     def evaluate(self, test_data, test_labels):

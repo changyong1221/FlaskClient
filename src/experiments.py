@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # global settings
-clients_num = 10
+clients_num = 5
 epoch = 1
 dataset = DataSet(clients_num)
 x_test, y_test = dataset.get_test_dataset()

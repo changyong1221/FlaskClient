@@ -31,10 +31,21 @@ def mnist_noniid(dataset, num_users):
 
     # divide and assign
     np.random.seed(2022)
-    rand_set_list = [{0, 19}, {1, 7}, {11, 4}, {16, 17}, {9, 2}, {13, 14}, {8, 3}, {10, 5}, {18, 6}, {12, 15}]
+    # rand_set_list = [{0, 19}, {1, 7}, {11, 4}, {16, 17}, {9, 2}, {13, 14}, {8, 3}, {10, 5}, {18, 6}, {12, 15}]
+    # rand_list = np.random.permutation(num_shards)
+    # print(rand_list)
+    # exit()
 
     for i in range(num_users):
-        rand_set = rand_set_list[i]
+        # rand_set = rand_set_list[i]
+        rand_set = set(np.random.choice(idx_shard, 2, replace=False))
+        idx_shard = list(set(idx_shard) - rand_set)
+        # rand_set = set(np.random.choice(idx_shard, 2, replace=False))
+        # idx_shard = list(set(idx_shard) - rand_set)
+        # print("i: ", i)
+        # print("rand_set: ", rand_set)
+        # print("idx_shard: ", idx_shard)
+        # print(rand_set)
         for rand in rand_set:
             dict_users[i] = np.concatenate((dict_users[i], idxs[rand * num_imgs:(rand + 1) * num_imgs]), axis=0)
     return dict_users
@@ -78,7 +89,7 @@ class DataSet(object):
 
 
 if __name__ == "__main__":
-    client_dataset = DataSet(10)
+    client_dataset = DataSet(5)
     # test_data, test_labels = client_dataset.get_test_dataset()
     train_data, train_labels = client_dataset.get_train_batch(1)
     print("type(train_data): ", type(train_data))

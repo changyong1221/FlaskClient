@@ -38,6 +38,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\src\fed_core.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\src\get_data.py">
           <value>
             <Attribute>
