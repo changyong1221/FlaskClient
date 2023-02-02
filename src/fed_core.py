@@ -14,7 +14,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 dev = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 q = 0.03
-eps = 1.0
+eps = 16.0
 delta = 1e-5
 tot_T = 100
 E = 1

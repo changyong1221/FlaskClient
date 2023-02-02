@@ -48,12 +48,12 @@ class DataSet(object):
         self.clients_num = clients_num
 
         # 加载mnist数据集
-        data_train = datasets.MNIST(root="datasets/", download=False, train=True, transform=transforms.Compose([
+        data_train = datasets.MNIST(root="../datasets/", download=False, train=True, transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
                        ]))
 
-        data_test = datasets.MNIST(root="datasets/", download=False, train=False, transform=transforms.Compose([
+        data_test = datasets.MNIST(root="../datasets/", download=False, train=False, transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
                        ]))
